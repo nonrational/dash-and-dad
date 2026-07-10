@@ -5,7 +5,7 @@ local snd = playdate.sound
 Ambience = {}
 
 local aboveChannel, belowChannel
-local hum1, hum2, lap, ping, gull, splash
+local hum1, hum2, lap, ping, gull, splash, chime
 local pingClock = 4
 local gullClock = 6
 local lapPhase = 0
@@ -41,6 +41,9 @@ function Ambience.init()
     ping:setADSR(0.001, 0.4, 0, 0.3)
     splash = snd.synth.new(snd.kWaveNoise)
     splash:setADSR(0.005, 0.25, 0, 0.1)
+
+    chime = snd.synth.new(snd.kWaveSquare)
+    chime:setADSR(0.005, 0.15, 0.4, 0.2)
 end
 
 function Ambience.update(dt)
@@ -70,5 +73,11 @@ function Ambience.update(dt)
 
     if Scope.surfacedNow then
         splash:playNote(400, 0.4, 0.25)
+    end
+
+    if Spy.foundNow then
+        local now = snd.getCurrentTime()
+        chime:playNote(1500, 0.15, 0.12, now)
+        chime:playNote(2000, 0.15, 0.18, now + 0.1)
     end
 end
