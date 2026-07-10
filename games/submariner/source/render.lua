@@ -133,6 +133,74 @@ local function drawAbove(wy)
     gfx.clearClipRect()
 end
 
+-- Fish: ellipse body plus a two-frame flapping tail.
+local function drawFish(x, y, s, dir, phase)
+    gfx.setColor(gfx.kColorBlack)
+    gfx.fillEllipseInRect(x - 5 * s, y - 2 * s, 10 * s, 4 * s)
+    local up = (math.sin(phase) > 0) and 3 or 1
+    local tx = x - 5 * s * dir
+    gfx.fillTriangle(tx, y,
+        tx - 4 * s * dir, y - up * s,
+        tx - 4 * s * dir, y + (4 - up) * s)
+end
+
+local function drawLightRays(wy)
+    if Scope.height < -0.6 then
+        return
+    end
+    setInk(0.18)
+    for i = -2, 2 do
+        local x = Render.CENTER_X + i * 38 + math.sin(t * 0.4 + i) * 6
+        gfx.fillPolygon(x - 3, wy, x + 3, wy, x + 14, wy + 90, x + 2, wy + 90)
+    end
+end
+
+local function drawBubbles(wy)
+    gfx.setColor(gfx.kColorBlack)
+    for _, bub in ipairs(World.bubbles) do
+        local x = Geom.bearingToScreenX(bub.bearing, Scope.bearing,
+            Render.CENTER_X, Render.PX_PER_DEG) + math.sin(bub.wobble) * 3
+        if x > -10 and x < 410 then
+            gfx.drawCircleAtPoint(x, wy + bub.depth, bub.r)
+        end
+    end
+end
+
+-- Depth murk drawn over the fish so they dim as the scope sinks.
+local function drawMurk(wy)
+    local darkness = Geom.clamp(-Scope.height, 0, 1) * 0.5
+    if darkness > 0.03 then
+        setInk(darkness)
+        gfx.fillRect(0, math.max(wy, 0), 400, 240)
+    end
+end
+
+local function drawBelow(wy)
+    gfx.setClipRect(0, math.max(wy + 1, 0), 400, 240)
+    drawLightRays(wy)
+    drawBubbles(wy)
+    for _, s in ipairs(World.schools) do
+        for _, m in ipairs(s.members) do
+            local x = Geom.bearingToScreenX(s.bearing + m.dBearing, Scope.bearing,
+                Render.CENTER_X, Render.PX_PER_DEG)
+            if x > -20 and x < 420 then
+                local y = wy + s.depth + m.dDepth + math.sin(m.phase * 0.5) * 2
+                drawFish(x, y, 1, s.dir, m.phase)
+            end
+        end
+    end
+    for _, f in ipairs(World.fish) do
+        local x = Geom.bearingToScreenX(f.bearing, Scope.bearing,
+            Render.CENTER_X, Render.PX_PER_DEG)
+        if x > -30 and x < 430 then
+            local y = wy + f.depth + math.sin(f.phase * 0.4) * 3
+            drawFish(x, y, f.size, f.dir, f.phase)
+        end
+    end
+    drawMurk(wy)
+    gfx.clearClipRect()
+end
+
 local function drawWaterline(wy)
     gfx.setColor(gfx.kColorBlack)
     for x = 92, 308, 2 do
@@ -174,6 +242,7 @@ function Render.draw(dt)
     end
     if wy < Render.CENTER_Y + Render.RADIUS then
         drawSea(wy)
+        drawBelow(wy)
     end
     drawWaterline(wy)
     mask:draw(0, 0)
