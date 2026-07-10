@@ -3,9 +3,9 @@
 An ambient submarine periscope toy for [Playdate](https://play.date).
 
 Rotate the periscope with the d-pad. Raise and lower it with the crank —
-three full turns sweep from the depths to high above the waves. Boats, gulls,
-and a lighthouse above the waterline; fish, bubbles, and deepening murk below.
-No objectives. Just watch the sea.
+three full turns sweep from the depths to high above the waves. Boats and a
+lighthouse above the waterline with gull calls overhead; fish, bubbles, and
+deepening murk below. No objectives. Just watch the sea.
 
 ## Build
 

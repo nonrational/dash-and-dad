@@ -117,10 +117,13 @@ assets.
 ```
 source/
   main.lua       -- wiring: init, update loop
-  scope.lua      -- input, bearing, height, justSurfaced()
+  geom.lua       -- pure math: wrap, projection, clamps, crossfade curve
+  scope.lua      -- input, bearing, height, surfacing signals
   world.lua      -- entity population, lanes, drift updates
   render.lua     -- all drawing: layers, mask, HUD
   ambience.lua   -- synth setup, crossfade, one-shots
+  tests.lua      -- boot-time assertions for geom (simulator only)
+  shots.lua      -- simulator-only screenshot harness for verification
   pdxinfo        -- metadata
 Makefile         -- pdc build + `make run` (simulator)
 ```
