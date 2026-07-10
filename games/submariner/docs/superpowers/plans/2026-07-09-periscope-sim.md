@@ -734,6 +734,10 @@ local function drawAbove(wy)
     end
     for _, laneName in ipairs(LANE_ORDER) do
         local lane = World.LANES[laneName]
+        -- Extend the clip by the lane's dip so the lower hull stays visible
+        -- below the line (the sea tint and chop draw over it afterwards);
+        -- clipping exactly at wy would swallow near-lane hulls entirely.
+        gfx.setClipRect(0, 0, 400, wy + lane.yOff)
         for _, b in ipairs(World.boats) do
             if b.lane == laneName then
                 local x = Geom.bearingToScreenX(b.bearing, Scope.bearing,
@@ -824,8 +828,8 @@ Shots.plan = {
 ```
 
 (Write the full absolute paths — `...` above is for readability only. Boats drift ~1–3°/s, so by capture time each is within a few degrees of its spawn bearing — near center of frame.) Read each PNG:
-- `task-5-sail-near.png`: large sailboat silhouette (hull, mast, two sails) near center, sitting low against the line, hull partly clipped by the water.
-- `task-5-trawler-mid.png`: mid-size trawler (hull, cabin block, angled boom line) slightly above-center-line placement, smaller than the near sail.
+- `task-5-sail-near.png`: large sailboat silhouette (hull, mast, two sails) near center, sitting low against the line; the hull renders below the chop with the sea tint over it (visibly "in" the water, not erased by it).
+- `task-5-trawler-mid.png`: mid-size trawler (hull, cabin block, angled boom line) sitting slightly below the line, smaller than the near sail.
 - `task-5-cargo-far.png`: long, low cargo silhouette with bridge block and container row, small, sitting right on the line.
 - `task-5-lighthouse.png`: tapered tower with cap on the line at ~305°.
 - `task-5-trawler-near.png`: large trawler near center.
