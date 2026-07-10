@@ -201,6 +201,26 @@ local function drawBelow(wy)
     gfx.clearClipRect()
 end
 
+-- Water streaks sliding down the lens just after it breaks the surface.
+-- Fixed jitter tables keep it deterministic (no math.random in the loop).
+local DROPLET_XS = { -70, -52, -31, -12, 4, 22, 47, 68, 86 }
+
+local function drawDroplets(progress)
+    gfx.setColor(gfx.kColorBlack)
+    gfx.setLineWidth(2)
+    for i, dx in ipairs(DROPLET_XS) do
+        local stagger = (i % 3) * 0.12
+        local p = Geom.clamp((progress - stagger) / (1 - stagger), 0, 1)
+        if p > 0 then
+            local x = Render.CENTER_X + dx
+            local y0 = Render.CENTER_Y - Render.RADIUS
+                + p * p * 150 + (i * 17) % 40
+            gfx.drawLine(x, y0, x, y0 + 10 + (i % 4) * 3)
+        end
+    end
+    gfx.setLineWidth(1)
+end
+
 local function drawWaterline(wy)
     gfx.setColor(gfx.kColorBlack)
     for x = 92, 308, 2 do
@@ -245,6 +265,10 @@ function Render.draw(dt)
         drawBelow(wy)
     end
     drawWaterline(wy)
+    local sp = Scope.surfacedProgress()
+    if sp then
+        drawDroplets(sp)
+    end
     mask:draw(0, 0)
     drawCrosshairs()
     drawHUD()
