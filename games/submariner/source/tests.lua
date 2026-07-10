@@ -8,6 +8,12 @@ function runTests()
         end
     end
 
+    local function ok(cond, msg)
+        if not cond then
+            error(string.format("FAIL %s: expected true", msg))
+        end
+    end
+
     eq(Geom.wrap360(370), 10, "wrap360 over")
     eq(Geom.wrap360(-10), 350, "wrap360 negative")
     eq(Geom.wrap360(360), 0, "wrap360 exact")
@@ -36,6 +42,16 @@ function runTests()
     eq(Geom.rotationSpeed(0), 25, "rotation base speed")
     eq(Geom.rotationSpeed(0.5), 55, "rotation fully ramped")
     eq(Geom.rotationSpeed(2), 55, "rotation capped")
+
+    ok(Geom.bearingAligned(50, 47, 6), "bearing aligned within tolerance")
+    ok(not Geom.bearingAligned(60, 47, 6), "bearing outside tolerance")
+    ok(Geom.bearingAligned(2, 358, 6), "bearing aligned across zero wrap")
+
+    ok(Geom.aboveVisible(50, 110, 104), "above visible when waterline below circle top")
+    ok(not Geom.aboveVisible(-10, 110, 104), "above not visible when waterline above circle")
+
+    ok(Geom.belowVisible(150, 110, 104), "below visible when waterline above circle bottom")
+    ok(not Geom.belowVisible(230, 110, 104), "below not visible when waterline below circle")
 
     print("geom tests: all passed")
 end

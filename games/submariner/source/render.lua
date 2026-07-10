@@ -257,10 +257,10 @@ function Render.draw(dt)
     t = t + dt
     gfx.clear(gfx.kColorWhite)
     local wy = waterY()
-    if wy > Render.CENTER_Y - Render.RADIUS then
+    if Geom.aboveVisible(wy, Render.CENTER_Y, Render.RADIUS) then
         drawAbove(wy)
     end
-    if wy < Render.CENTER_Y + Render.RADIUS then
+    if Geom.belowVisible(wy, Render.CENTER_Y, Render.RADIUS) then
         drawSea(wy)
         drawBelow(wy)
     end

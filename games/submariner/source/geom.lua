@@ -43,3 +43,20 @@ end
 function Geom.rotationSpeed(holdSeconds)
     return 25 + 30 * Geom.clamp(holdSeconds / 0.5, 0, 1)
 end
+
+-- True if entityBearing sits within toleranceDeg of scopeBearing (used by
+-- the spy-target aim check).
+function Geom.bearingAligned(entityBearing, scopeBearing, toleranceDeg)
+    return math.abs(Geom.wrappedDelta(scopeBearing, entityBearing)) <= toleranceDeg
+end
+
+-- Mirrors the visibility gates Render.draw uses to decide whether the
+-- above/below layers render this frame, so spy detection only counts a
+-- target as found when it is actually on screen.
+function Geom.aboveVisible(waterY, centerY, radius)
+    return waterY > centerY - radius
+end
+
+function Geom.belowVisible(waterY, centerY, radius)
+    return waterY < centerY + radius
+end
