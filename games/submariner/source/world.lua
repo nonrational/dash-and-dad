@@ -18,6 +18,7 @@ function World.init()
         { type = "cargo",   lane = "far",  bearing = 205, dir = 1,  bobPhase = 2.6 },
         { type = "sail",    lane = "far",  bearing = 255, dir = -1, bobPhase = 3.9 },
         { type = "trawler", lane = "near", bearing = 335, dir = 1,  bobPhase = 5.2 },
+        { type = "sub",     lane = "mid",  bearing = 15,  dir = 1,  bobPhase = 4.4 },
     }
     World.clouds = {
         { bearing = 20,  above = 62, w = 46, drift = 0.5 },
@@ -53,6 +54,18 @@ function World.init()
             }
         end
     end
+    World.planes = {
+        { bearing = 100, above = 92, drift = 8,   dir = 1 },
+    }
+    World.helicopters = {
+        { bearing = 260, above = 65, drift = 3.5, dir = -1, rotorPhase = 0 },
+    }
+    World.sharks = {
+        { bearing = 190, depth = 70, dir = 1,  speed = 4.5, phase = 0 },
+    }
+    World.whales = {
+        { bearing = 340, depth = 90, dir = -1, speed = 1.0, phase = 0, spoutPhase = 0 },
+    }
 end
 
 function World.update(dt)
@@ -79,5 +92,22 @@ function World.update(dt)
         if bub.depth < 4 then
             bub.depth = 175
         end
+    end
+    for _, p in ipairs(World.planes) do
+        p.bearing = Geom.wrap360(p.bearing + p.dir * p.drift * dt)
+    end
+    for _, h in ipairs(World.helicopters) do
+        h.bearing = Geom.wrap360(h.bearing + h.dir * h.drift * dt)
+        h.rotorPhase = h.rotorPhase + dt * 14
+    end
+    for _, sh in ipairs(World.sharks) do
+        sh.bearing = Geom.wrap360(sh.bearing + sh.dir * sh.speed * dt)
+        sh.phase = sh.phase + dt * 3
+    end
+    for _, w in ipairs(World.whales) do
+        w.bearing = Geom.wrap360(w.bearing + w.dir * w.speed * dt)
+        w.spoutPhase = w.spoutPhase + dt * 0.3
+        w.depth = 90 + math.sin(w.spoutPhase) * 70
+        w.phase = w.phase + dt * 1.5
     end
 end
