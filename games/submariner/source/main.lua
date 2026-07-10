@@ -2,12 +2,14 @@ import "CoreLibs/graphics"
 import "CoreLibs/ui"
 import "tests"
 import "scope"
+import "world"
 import "render"
 import "shots"
 
 playdate.display.setRefreshRate(30)
 
 Render.init()
+World.init()
 if playdate.isSimulator then
     runTests()
 end
@@ -19,6 +21,7 @@ function playdate.update()
         dt = 1 / 30
     end
     Scope.update(dt)
+    World.update(dt)
     Render.draw(dt)
     if playdate.isCrankDocked() then
         playdate.ui.crankIndicator:draw()
