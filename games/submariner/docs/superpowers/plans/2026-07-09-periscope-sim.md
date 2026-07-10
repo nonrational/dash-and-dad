@@ -19,8 +19,12 @@
 - Target **30 fps** (`playdate.display.setRefreshRate(30)`).
 - No host Lua exists on this machine. Pure-math tests run at boot **inside the simulator** (`runTests()` guarded by `playdate.isSimulator`) and print to the simulator console. To see console output in your terminal, launch the simulator binary directly: `"$HOME/Developer/PlaydateSDK/bin/Playdate Simulator.app/Contents/MacOS/Playdate Simulator" Submariner.pdx`. A failed assertion calls `error()`, which the simulator surfaces as a crash screen — that is the "red" state.
 - `playdate.graphics.setDitherPattern(alpha, ditherType)` has a documented quirk: alpha runs inverted vs. intuition for black ink. All dithered fills go through the `setInk(darkness)` helper defined in Task 3 — never call `setDitherPattern` directly elsewhere.
-- Commit messages: plain descriptive sentences. **Never** use Conventional Commit prefixes (`feat:`, `fix:`, etc.).
-- Visual tasks end with a manual simulator check — this is an ambient toy; the checklist in each task is the acceptance test. Run `make run`, verify each item.
+- Commit messages: plain descriptive sentences. **Never** use Conventional Commit prefixes (`feat:`, `fix:`, etc.). Pass `--no-gpg-sign` to every `git commit` (repo has signing on; the user is AFK and has authorized unsigned commits for this build).
+- `screencapture` is blocked on this machine (no screen-recording permission). Visual verification instead uses the simulator-only screenshot harness `source/shots.lua` (created in Task 3): temporarily populate `Shots.plan` with entries `{ after = <seconds>, set = { <Scope field> = <value>, ... }, path = "<absolute .png path>" }`, then run:
+  `make build && pkill -f "Playdate Simulator"; timeout 30 "$HOME/Developer/PlaydateSDK/bin/Playdate Simulator.app/Contents/MacOS/Playdate Simulator" Submariner.pdx`
+  The harness pins the `set` fields onto `Scope` every frame, writes each PNG after its `after` delay, and exits the simulator after the last shot. Read each PNG and check it against the task's expected-image checklist. Write PNGs to `/Users/norton/wrk/supertinylabs/submariner/.superpowers/sdd/` (git-ignored). **Restore `Shots.plan = {}` before committing.**
+- Checks that genuinely need human interaction (rotation ramp feel, crank feel, audio character) are deferred to the human acceptance pass in Task 9 — list them explicitly in your report as deferred, never skip them silently.
+- Visual tasks end with the harness check above — this is an ambient toy; the checklist in each task is the acceptance test.
 
 ---
 
@@ -258,10 +262,12 @@ git commit -m "Add pure-math geom module with boot-time tests"
 
 **Files:**
 - Create: `source/render.lua`
+- Create: `source/shots.lua`
 - Modify: `source/main.lua`
 
 **Interfaces:**
 - Consumes: `Geom` (Task 2); a global `Scope` table with `bearing` and `height` fields (placeholder in `main.lua` until Task 4 replaces it).
+- Produces the `Shots` global (screenshot harness, see Global Constraints): `Shots.update(dt)` called last in `playdate.update`; `Shots.plan` empty in committed code.
 - Produces the `Render` global used by Tasks 4–7:
   - `Render.init()` — builds the mask image; call once.
   - `Render.draw(dt)` — draws the whole frame; call every update.
@@ -368,12 +374,49 @@ function Render.draw(dt)
 end
 ```
 
-- [ ] **Step 2: Update `source/main.lua`** (full replacement)
+- [ ] **Step 2: Write `source/shots.lua`** (screenshot harness, see Global Constraints)
+
+```lua
+-- Simulator-only screenshot harness for autonomous visual verification.
+-- Each Shots.plan entry:
+--   { after = <seconds>, set = { <Scope field> = <value>, ... }, path = "<absolute .png path>" }
+-- While a shot is pending, its `set` fields are pinned onto Scope every frame
+-- so the captured frame is deterministic. After the last shot the simulator
+-- exits. Committed code always has an empty plan.
+Shots = { plan = {}, t = 0, i = 1 }
+
+function Shots.update(dt)
+    if not playdate.isSimulator then
+        return
+    end
+    local shot = Shots.plan[Shots.i]
+    if not shot then
+        if Shots.i > 1 then
+            playdate.simulator.exit()
+        end
+        return
+    end
+    if shot.set then
+        for k, v in pairs(shot.set) do
+            Scope[k] = v
+        end
+    end
+    Shots.t = Shots.t + dt
+    if Shots.t >= shot.after then
+        playdate.simulator.writeToFile(playdate.graphics.getDisplayImage(), shot.path)
+        Shots.t = 0
+        Shots.i = Shots.i + 1
+    end
+end
+```
+
+- [ ] **Step 3: Update `source/main.lua`** (full replacement)
 
 ```lua
 import "CoreLibs/graphics"
 import "tests"
 import "render"
+import "shots"
 
 playdate.display.setRefreshRate(30)
 
@@ -392,28 +435,37 @@ function playdate.update()
         dt = 1 / 30
     end
     Render.draw(dt)
+    Shots.update(dt)
 end
 ```
 
-- [ ] **Step 3: Run and verify visually**
+- [ ] **Step 4: Verify via the screenshot harness**
 
-Run: `make run`
-Expected, in the simulator:
-- Black screen with a clean white circular eyepiece centered slightly high.
-- Waterline band ~36 px below center (height 0.3 → y 146) with gently animated 2 px chop.
-- Below the line: light Bayer-dither sea tint with short wave strokes drifting at different speeds per row.
-- Thin crosshairs with an open center gap and tick marks along the horizontal.
-- White `BRG 047°` centered in the black strip under the circle. If the `°` glyph renders as a box, drop it from the format string.
+Temporarily set in `source/shots.lua`:
 
-- [ ] **Step 4: Sanity-check the extremes**
+```lua
+Shots.plan = {
+    { after = 1.5, set = { bearing = 47, height = 0.3 },
+      path = "/Users/norton/wrk/supertinylabs/submariner/.superpowers/sdd/task-3-mid.png" },
+    { after = 1.0, set = { height = 1 },
+      path = "/Users/norton/wrk/supertinylabs/submariner/.superpowers/sdd/task-3-up.png" },
+    { after = 1.0, set = { height = -1 },
+      path = "/Users/norton/wrk/supertinylabs/submariner/.superpowers/sdd/task-3-down.png" },
+}
+```
 
-Temporarily set the placeholder to `height = 1` (run: line below the circle, all white sky) and `height = -1` (line gone above; sea tint fills the circle). Restore `height = 0.3` after checking.
+Run the harness command from Global Constraints, then Read each PNG:
+- `task-3-mid.png`: black surround with a clean white circular eyepiece centered slightly high; waterline band ~36 px below center (y ≈ 146) with 2 px chop; below the line a light Bayer-dither sea tint with short horizontal wave strokes; thin crosshairs with an open center gap and tick marks; white `BRG 047°` centered in the black strip under the circle. If the `°` glyph renders as a box, drop it from the format string.
+- `task-3-up.png`: all white sky inside the circle — no waterline, no sea tint visible.
+- `task-3-down.png`: sea tint fills the circle — no waterline, no white sky band.
+
+Restore `Shots.plan = {}` before committing.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add source
-git commit -m "Add scope view shell with mask, crosshairs, HUD, and waterline"
+git commit --no-gpg-sign -m "Add scope view shell with mask, crosshairs, HUD, and waterline"
 ```
 
 ---
@@ -498,6 +550,7 @@ import "CoreLibs/ui"
 import "tests"
 import "scope"
 import "render"
+import "shots"
 
 playdate.display.setRefreshRate(30)
 
@@ -517,24 +570,36 @@ function playdate.update()
     if playdate.isCrankDocked() then
         playdate.ui.crankIndicator:draw()
     end
+    Shots.update(dt)
 end
 ```
 
-- [ ] **Step 3: Run and verify interactively**
+- [ ] **Step 3: Verify via the screenshot harness**
 
-Run: `make run`
-Expected, in the simulator (d-pad = arrow keys, crank = mouse-drag the on-screen crank or `[`/`]`):
-- Boot shows the line high in the view (height −0.4 → y 62) — mostly water.
-- With the crank docked, the "use the crank" indicator animates.
-- Undock and crank forward: the line sweeps down; ~3 full revolutions runs bottom stop to top stop; the height clamps silently at each end.
-- Hold right: `BRG` counts up, visibly accelerating over the first half second; `359 → 000` wraps cleanly. Hold left: counts down.
-- Crank up through the line: nothing special yet (droplets are Task 7), but no glitches at the crossing.
+Temporarily set in `source/shots.lua`:
+
+```lua
+Shots.plan = {
+    { after = 2.5,
+      path = "/Users/norton/wrk/supertinylabs/submariner/.superpowers/sdd/task-4-boot.png" },
+    { after = 1.0, set = { height = 0.6 },
+      path = "/Users/norton/wrk/supertinylabs/submariner/.superpowers/sdd/task-4-raised.png" },
+}
+```
+
+(The first shot sets nothing — it captures the real boot state.) Run the harness command, then Read each PNG:
+- `task-4-boot.png`: waterline high in the view (height −0.4 → y ≈ 62), sea tint filling most of the circle, `BRG 047°`, and the SDK "use the crank" indicator visible (the simulator boots with the crank docked).
+- `task-4-raised.png`: waterline low in the view (y ≈ 182), mostly sky.
+
+Restore `Shots.plan = {}` before committing.
+
+**Deferred to the Task 9 human pass (list in your report):** rotation ramp feel and 359→000 wrap while holding the d-pad; ~3 crank revolutions bottom-to-top with silent clamping at the stops; no glitches when cranking across the line.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add source
-git commit -m "Wire d-pad rotation and crank height into the scope"
+git commit --no-gpg-sign -m "Wire d-pad rotation and crank height into the scope"
 ```
 
 ---
@@ -711,6 +776,7 @@ import "tests"
 import "scope"
 import "world"
 import "render"
+import "shots"
 
 playdate.display.setRefreshRate(30)
 
@@ -732,25 +798,44 @@ function playdate.update()
     if playdate.isCrankDocked() then
         playdate.ui.crankIndicator:draw()
     end
+    Shots.update(dt)
 end
 ```
 
-- [ ] **Step 4: Run and verify visually**
+- [ ] **Step 4: Verify via the screenshot harness**
 
-Run: `make run`, crank up to height ≈ +0.5, then rotate a full 360°.
-Expected:
-- All five boats found at their bearings (near ~40° sail, mid ~130° trawler, far ~205° cargo, far ~255° sail, near ~335° trawler); the lighthouse at ~305°.
-- Near boats larger, sitting lower (hulls partly hidden by the clip at the line), drifting visibly faster than far boats.
-- Boats bob gently; the chop line overlaps their hulls.
-- Dithered clouds drift slowly, high above the line.
-- Rotating right moves the world left (bearing readout increases toward each boat's bearing as it centers).
-- Fully submerged (crank down): no boats, clouds, or lighthouse visible.
+Temporarily set in `source/shots.lua` (all paths under `/Users/norton/wrk/supertinylabs/submariner/.superpowers/sdd/`):
+
+```lua
+Shots.plan = {
+    { after = 1.5, set = { height = 0.5, bearing = 40 },  path = ".../task-5-sail-near.png" },
+    { after = 1.0, set = { height = 0.5, bearing = 130 }, path = ".../task-5-trawler-mid.png" },
+    { after = 1.0, set = { height = 0.5, bearing = 205 }, path = ".../task-5-cargo-far.png" },
+    { after = 1.0, set = { height = 0.5, bearing = 305 }, path = ".../task-5-lighthouse.png" },
+    { after = 1.0, set = { height = 0.5, bearing = 335 }, path = ".../task-5-trawler-near.png" },
+    { after = 1.0, set = { height = 0.5, bearing = 20 },  path = ".../task-5-cloud.png" },
+    { after = 1.0, set = { height = -0.9, bearing = 40 }, path = ".../task-5-submerged.png" },
+}
+```
+
+(Write the full absolute paths — `...` above is for readability only. Boats drift ~1–3°/s, so by capture time each is within a few degrees of its spawn bearing — near center of frame.) Read each PNG:
+- `task-5-sail-near.png`: large sailboat silhouette (hull, mast, two sails) near center, sitting low against the line, hull partly clipped by the water.
+- `task-5-trawler-mid.png`: mid-size trawler (hull, cabin block, angled boom line) slightly above-center-line placement, smaller than the near sail.
+- `task-5-cargo-far.png`: long, low cargo silhouette with bridge block and container row, small, sitting right on the line.
+- `task-5-lighthouse.png`: tapered tower with cap on the line at ~305°.
+- `task-5-trawler-near.png`: large trawler near center.
+- `task-5-cloud.png`: dithered two-lobe cloud high above the line (cloud spawns at bearing 20).
+- `task-5-submerged.png`: no boats, clouds, or lighthouse — only sea tint and waterline high in view.
+
+Restore `Shots.plan = {}` before committing.
+
+**Deferred to the Task 9 human pass (list in your report):** near-lane boats visibly drifting faster than far-lane; gentle bobbing; rotating right moves the world left.
 
 - [ ] **Step 5: Commit**
 
 ```bash
 git add source
-git commit -m "Add above-water world with boats, lighthouse, and clouds"
+git commit --no-gpg-sign -m "Add above-water world with boats, lighthouse, and clouds"
 ```
 
 ---
@@ -921,22 +1006,37 @@ function Render.draw(dt)
 end
 ```
 
-- [ ] **Step 3: Run and verify visually**
+- [ ] **Step 3: Verify via the screenshot harness**
 
-Run: `make run`, stay submerged, rotate a full 360°, then sweep the crank slowly bottom to top.
-Expected:
-- Two schools (near-surface ~70°, deeper ~220°) swimming in loose formation, tails flapping; two big lone fish deeper still.
-- Bubble columns at ~95°, ~185°, ~300°, wobbling as they rise, recycling at the bottom.
-- Faint dithered light rays fanning down from the line, fading out below height −0.6.
-- Murk dither visibly darkens as you crank toward −1 and clears near the surface. If it looks inverted (darker near the surface), the `setInk` inversion is wrong on this SDK — flip `1 - darkness` to `darkness` in `setInk` and re-check Task 3's sea tint too.
-- Fish never draw above the waterline; boats never draw below it.
-- 30 fps holds (no visible stutter while rotating with everything on screen).
+Temporarily set in `source/shots.lua` (write full absolute paths under `/Users/norton/wrk/supertinylabs/submariner/.superpowers/sdd/`):
+
+```lua
+Shots.plan = {
+    { after = 1.5, set = { height = -0.3, bearing = 70 },  path = ".../task-6-school.png" },
+    { after = 1.0, set = { height = -0.5, bearing = 220 }, path = ".../task-6-school-deep.png" },
+    { after = 1.0, set = { height = -0.3, bearing = 95 },  path = ".../task-6-bubbles.png" },
+    { after = 1.0, set = { height = -1, bearing = 150 },   path = ".../task-6-murk.png" },
+    { after = 1.0, set = { height = 0.05, bearing = 40 },  path = ".../task-6-split.png" },
+}
+```
+
+Read each PNG:
+- `task-6-school.png`: several small fish in loose formation near center, dithered light rays fanning down from the line.
+- `task-6-school-deep.png`: second school, visibly darker overall (more murk dither than the first shot).
+- `task-6-bubbles.png`: a wobbling column of small circles rising toward the line.
+- `task-6-murk.png`: heavy dither over everything; a large lone fish silhouette still readable (~y 130); no light rays; no waterline visible.
+- `task-6-split.png`: waterline mid-view; sky and (possibly) a boat above; sea tint and underwater content below; no fish above the line, no boat parts below it beyond the line's own chop.
+- Murk check across shots: `task-6-murk.png` clearly darker than `task-6-school.png`. If it's inverted (lighter when deeper), the `setInk` inversion is wrong on this SDK — flip `1 - darkness` to `darkness` in `setInk` and re-check the sea tint from Task 3 too.
+
+Restore `Shots.plan = {}` before committing.
+
+**Deferred to the Task 9 human pass (list in your report):** tail-flap animation, bubble recycling at the bottom, 30 fps hold while rotating with everything on screen.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add source
-git commit -m "Add underwater world with fish, bubbles, light rays, and murk"
+git commit --no-gpg-sign -m "Add underwater world with fish, bubbles, light rays, and murk"
 ```
 
 ---
@@ -985,16 +1085,32 @@ Then in `Render.draw`, insert between `drawWaterline(wy)` and `mask:draw(0, 0)`:
     end
 ```
 
-- [ ] **Step 2: Run and verify visually**
+- [ ] **Step 2: Verify via the screenshot harness**
 
-Run: `make run`, crank from below the surface up through it.
-Expected: the moment `height` crosses 0 going up, ~9 short vertical streaks accelerate down the lens over half a second, staggered in three waves, then vanish. Nothing happens when crossing downward. Crossing repeatedly retriggers cleanly.
+The harness can't turn the crank, but it can pin `Scope.surfacedTimer` directly to freeze the droplet animation mid-flight (`surfacedProgress()` reads it). Temporarily set in `source/shots.lua` (full absolute paths under `/Users/norton/wrk/supertinylabs/submariner/.superpowers/sdd/`):
+
+```lua
+Shots.plan = {
+    { after = 1.5, set = { height = 0.15, surfacedTimer = 0.1 },  path = ".../task-7-early.png" },
+    { after = 1.0, set = { height = 0.15, surfacedTimer = 0.35 }, path = ".../task-7-late.png" },
+    { after = 1.0, set = { height = 0.15, surfacedTimer = 0.9 },  path = ".../task-7-gone.png" },
+}
+```
+
+Read each PNG:
+- `task-7-early.png`: several short vertical streaks in the upper part of the lens (first stagger wave started, later waves not yet).
+- `task-7-late.png`: more streaks, clearly lower in the lens than in the early shot (they accelerate downward).
+- `task-7-gone.png`: no streaks (timer past the 0.5 s window).
+
+Restore `Shots.plan = {}` before committing.
+
+**Deferred to the Task 9 human pass (list in your report):** live retrigger when cranking across the surface repeatedly; nothing triggers when crossing downward.
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add source
-git commit -m "Add droplet streaks when the scope breaks the surface"
+git commit --no-gpg-sign -m "Add droplet streaks when the scope breaks the surface"
 ```
 
 ---
@@ -1102,6 +1218,7 @@ import "scope"
 import "world"
 import "render"
 import "ambience"
+import "shots"
 
 playdate.display.setRefreshRate(30)
 
@@ -1125,23 +1242,32 @@ function playdate.update()
     if playdate.isCrankDocked() then
         playdate.ui.crankIndicator:draw()
     end
+    Shots.update(dt)
 end
 ```
 
-- [ ] **Step 3: Run and verify by ear**
+- [ ] **Step 3: Verify stability via the screenshot harness (audio itself is deferred)**
 
-Run: `make run` (simulator audio on).
-Expected:
-- Submerged: low beating hum; a clean sonar ping every 6–10 s.
-- Crank up through the line: an audible splash with the droplets; hum fades out as wave wash fades in.
-- Raised: noise bed swells and recedes like lapping water; an occasional two-note gull; no pings.
-- Sitting exactly at the line: both beds faintly audible at once.
+Audio can't be verified headlessly, but the audio code paths can be exercised: a long submerged stretch fires the sonar-ping branch (~4 s in), a long raised stretch fires the gull branch, and the crossfade runs every frame. Any Lua error in those paths crashes the simulator, which the harness run would surface. Temporarily set in `source/shots.lua` (full absolute paths under `/Users/norton/wrk/supertinylabs/submariner/.superpowers/sdd/`):
+
+```lua
+Shots.plan = {
+    { after = 6, set = { height = -0.8 }, path = ".../task-8-submerged.png" },
+    { after = 9, set = { height = 0.8 },  path = ".../task-8-raised.png" },
+}
+```
+
+Run the harness command (use `timeout 45` — this plan runs ~15 s plus load time). Expected: both PNGs written, console shows `geom tests: all passed` and no Lua errors; the images match their heights (mostly water / mostly sky).
+
+Restore `Shots.plan = {}` before committing.
+
+**Deferred to the Task 9 human pass (list in your report):** submerged hum + ping every 6–10 s; splash on surfacing; lapping swell + occasional two-note gull when raised; both beds faintly audible exactly at the line.
 
 - [ ] **Step 4: Commit**
 
 ```bash
 git add source
-git commit -m "Add synthesized ambience with waterline crossfade"
+git commit --no-gpg-sign -m "Add synthesized ambience with waterline crossfade"
 ```
 
 ---
@@ -1157,21 +1283,33 @@ git commit -m "Add synthesized ambience with waterline crossfade"
 - Consumes: everything.
 - Produces: v1 signed off against the spec's six acceptance criteria.
 
-- [ ] **Step 1: Temporary FPS check**
+- [ ] **Step 1: Temporary FPS check (headless)**
 
-Add `playdate.drawFPS(4, 4)` as the last line of `playdate.update()`, run `make run`, rotate through the busiest bearing while submerged and while raised.
-Expected: steady 30. Remove the line afterwards.
+Temporarily add as the last line of `playdate.update()`:
 
-- [ ] **Step 2: Walk the six acceptance criteria from the spec**
+```lua
+    if playdate.isSimulator and playdate.getCurrentTimeMilliseconds() > 4000 then
+        print("fps", playdate.getFPS())
+    end
+```
 
-1. `make build` exits 0; `make run` boots with no console errors and `geom tests: all passed`.
-2. D-pad rotates with wrap; HUD matches; ramp is felt.
-3. Full crank sweep ≈ 3 revolutions; line fully exits the circle at both extremes.
-4. Three boat types + lighthouse above; two schools, two lone fish, bubbles below; murk deepens with depth.
-5. Droplets + splash on surfacing.
-6. Ambience crossfades across the line.
+Set a harness plan with one busy submerged shot (`{ after = 8, set = { height = -0.3, bearing = 70 }, path = ".../task-9-busy.png" }`) and one raised (`{ after = 4, set = { height = 0.5, bearing = 40 }, path = ".../task-9-raised.png" }`), run with `timeout 45`, and check the printed fps values.
+Expected: values steady at ≈30 (29+ acceptable). Remove the print line and restore `Shots.plan = {}` afterwards.
+
+- [ ] **Step 2: Walk the six acceptance criteria from the spec (autonomous forms)**
+
+1. `make build` exits 0; the direct simulator launch prints `geom tests: all passed` and no Lua errors.
+2. D-pad rotation logic: covered by geom tests (wrap, ramp curve); live feel is on the human checklist.
+3. Line fully exits the circle at both extremes: re-check `task-3-up.png` / `task-3-down.png` equivalents with a fresh two-shot harness run at `height = 1` and `height = -1`.
+4. Three boat types + lighthouse above; two schools, two lone fish, bubbles below; murk deepens with depth: verified by the Task 5/6 PNGs still in `.superpowers/sdd/` — spot-check they exist and match; re-shoot any that are missing.
+5. Droplets on surfacing: Task 7 PNGs; splash sound is on the human checklist.
+6. Ambience crossfade: code path exercised in Task 8; audible behavior is on the human checklist.
 
 Fix anything that fails before proceeding; re-run the failing check after each fix.
+
+- [ ] **Step 2b: Compile the human checklist**
+
+Write `.superpowers/sdd/human-checklist.md` listing every deferred item from Tasks 4–8 reports (rotation ramp feel, crank sweep/clamp feel, wrap, live droplet retrigger, all audio items, live fps while rotating). This is handed to the user after the build — it is the final acceptance gate for feel and audio.
 
 - [ ] **Step 3: Write `README.md`**
 
@@ -1200,5 +1338,5 @@ To play on a device, build then sideload `Submariner.pdx` via the simulator
 
 ```bash
 git add README.md source
-git commit -m "Add README and tune constants after acceptance pass"
+git commit --no-gpg-sign -m "Add README and tune constants after acceptance pass"
 ```
