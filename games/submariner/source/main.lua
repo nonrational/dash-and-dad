@@ -3,6 +3,7 @@ import "CoreLibs/ui"
 import "tests"
 import "scope"
 import "world"
+import "spy"
 import "render"
 import "ambience"
 import "shots"
@@ -11,6 +12,7 @@ playdate.display.setRefreshRate(30)
 
 Render.init()
 World.init()
+Spy.init()
 Ambience.init()
 if playdate.isSimulator then
     runTests()
@@ -24,6 +26,7 @@ function playdate.update()
     end
     Scope.update(dt)
     World.update(dt)
+    Spy.update(dt)
     Render.draw(dt)
     Ambience.update(dt)
     if playdate.isCrankDocked() then

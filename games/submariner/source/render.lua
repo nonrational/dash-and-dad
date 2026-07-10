@@ -9,6 +9,7 @@ Render = {
     RADIUS = 104,
     PX_PER_DEG = 3.5,
     SWING = 120,
+    RAIL_CENTER_X = 312, -- (CENTER_X + RADIUS + 400) / 2
 }
 
 local mask = nil
@@ -360,6 +361,12 @@ local function drawHUD()
     gfx.setImageDrawMode(gfx.kDrawModeCopy)
 end
 
+local function drawSpyRail()
+    gfx.setImageDrawMode(gfx.kDrawModeFillWhite)
+    gfx.drawTextAligned(string.upper(Spy.target), Render.RAIL_CENTER_X, 110, kTextAlignment.center)
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
+end
+
 function Render.draw(dt)
     t = t + dt
     gfx.clear(gfx.kColorWhite)
@@ -379,4 +386,5 @@ function Render.draw(dt)
     mask:draw(0, 0)
     drawCrosshairs()
     drawHUD()
+    drawSpyRail()
 end
