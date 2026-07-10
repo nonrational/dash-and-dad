@@ -4,7 +4,7 @@ import "geom"
 local gfx = playdate.graphics
 
 Render = {
-    CENTER_X = 200,
+    CENTER_X = 120,
     CENTER_Y = 110,
     RADIUS = 104,
     PX_PER_DEG = 3.5,
@@ -44,11 +44,13 @@ local function drawSea(wy)
     setInk(0.12)
     gfx.fillRect(0, wy, 400, 240 - wy)
     gfx.setColor(gfx.kColorBlack)
+    local left = Render.CENTER_X - Render.RADIUS
+    local right = Render.CENTER_X + Render.RADIUS
     for row = 1, 5 do
         local y = wy + 8 + row * 14
         local phase = (t * (14 - row * 2) + row * 53
             - Scope.bearing * Render.PX_PER_DEG) % 40
-        for x = 96 - phase, 304, 40 do
+        for x = left - phase, right, 40 do
             gfx.drawLine(x, y, x + 12 - row, y)
         end
     end
@@ -82,7 +84,16 @@ local function drawCargo(x, y, s, dir)
     gfx.drawLine(px(17), y - 16 * s, px(17), y - 19 * s)
 end
 
-local BOAT_DRAWERS = { sail = drawSail, trawler = drawTrawler, cargo = drawCargo }
+-- Rival submarine: low flat hull, small conning tower.
+local function drawSub(x, y, s, dir)
+    local function px(dx) return x + dx * s * dir end
+    gfx.setColor(gfx.kColorBlack)
+    gfx.fillPolygon(px(-20), y, px(20), y, px(24), y - 3 * s, px(-24), y - 3 * s)
+    gfx.fillRect(math.min(px(-4), px(4)), y - 9 * s, 8 * s, 6 * s)
+    gfx.drawLine(px(0), y - 9 * s, px(0), y - 13 * s)
+end
+
+local BOAT_DRAWERS = { sail = drawSail, trawler = drawTrawler, cargo = drawCargo, sub = drawSub }
 local LANE_ORDER = { "far", "mid", "near" }
 
 local function drawLighthouse(x, y)
@@ -103,10 +114,60 @@ local function drawClouds(wy)
     end
 end
 
+local function drawPlanes(wy)
+    gfx.setColor(gfx.kColorBlack)
+    for _, p in ipairs(World.planes) do
+        local x = Geom.bearingToScreenX(p.bearing, Scope.bearing,
+            Render.CENTER_X, Render.PX_PER_DEG)
+        if x > -30 and x < 430 then
+            local y = wy - p.above
+            gfx.fillPolygon(x - 14, y, x + 14, y - 1, x + 16, y + 1, x - 13, y + 2)
+            gfx.fillTriangle(x - 2, y, x - 2, y - 7, x + 4, y)
+            gfx.fillTriangle(x - 2, y + 1, x - 2, y + 6, x + 3, y + 1)
+        end
+    end
+end
+
+local function drawHelicopters(wy)
+    gfx.setColor(gfx.kColorBlack)
+    for _, h in ipairs(World.helicopters) do
+        local x = Geom.bearingToScreenX(h.bearing, Scope.bearing,
+            Render.CENTER_X, Render.PX_PER_DEG)
+        if x > -30 and x < 430 then
+            local y = wy - h.above
+            gfx.fillRoundRect(x - 9, y - 3, 18, 7, 3)
+            gfx.fillRect(x + 7, y - 1, 8, 3)
+            local spread = (math.sin(h.rotorPhase) > 0) and 16 or 10
+            gfx.drawLine(x - spread, y - 6, x + spread, y - 6)
+        end
+    end
+end
+
+-- Whale spout: a small dithered plume drawn above the waterline at the
+-- whale's bearing while it's near-surface. The whale's body always draws
+-- in the underwater layer (drawWhales, below) regardless of spout state.
+local WHALE_SPOUT_DEPTH = 35
+
+local function drawWhaleSpouts(wy)
+    setInk(0.3)
+    for _, w in ipairs(World.whales) do
+        if w.depth < WHALE_SPOUT_DEPTH then
+            local x = Geom.bearingToScreenX(w.bearing, Scope.bearing,
+                Render.CENTER_X, Render.PX_PER_DEG)
+            if x > -20 and x < 420 then
+                gfx.fillPolygon(x - 3, wy, x + 3, wy, x + 5, wy - 18, x - 5, wy - 18)
+            end
+        end
+    end
+end
+
 -- Everything above the waterline, clipped to it so hulls sit "in" the water.
 local function drawAbove(wy)
     gfx.setClipRect(0, 0, 400, wy)
     drawClouds(wy)
+    drawPlanes(wy)
+    drawHelicopters(wy)
+    drawWhaleSpouts(wy)
     local lx = Geom.bearingToScreenX(World.lighthouse.bearing, Scope.bearing,
         Render.CENTER_X, Render.PX_PER_DEG)
     if lx > -40 and lx < 440 then
@@ -142,6 +203,48 @@ local function drawFish(x, y, s, dir, phase)
     gfx.fillTriangle(tx, y,
         tx - 4 * s * dir, y - up * s,
         tx - 4 * s * dir, y + (4 - up) * s)
+end
+
+-- Shark: bigger than a lone fish, with a distinct dorsal fin.
+local function drawShark(x, y, dir, phase)
+    local function px(dx) return x + dx * dir end
+    gfx.setColor(gfx.kColorBlack)
+    gfx.fillEllipseInRect(math.min(px(-13), px(13)), y - 4, 26, 8)
+    gfx.fillTriangle(px(-2), y - 4, px(2), y - 12, px(5), y - 4)
+    local up = (math.sin(phase) > 0) and 5 or 2
+    gfx.fillTriangle(px(-13), y, px(-20), y - up, px(-20), y + (6 - up))
+end
+
+local function drawSharks(wy)
+    for _, sh in ipairs(World.sharks) do
+        local x = Geom.bearingToScreenX(sh.bearing, Scope.bearing,
+            Render.CENTER_X, Render.PX_PER_DEG)
+        if x > -30 and x < 430 then
+            local y = wy + sh.depth + math.sin(sh.phase * 0.4) * 3
+            drawShark(x, y, sh.dir, sh.phase)
+        end
+    end
+end
+
+-- Whale body: the largest underwater silhouette.
+local function drawWhale(x, y, dir, phase)
+    local function px(dx) return x + dx * dir end
+    gfx.setColor(gfx.kColorBlack)
+    gfx.fillEllipseInRect(math.min(px(-30), px(30)), y - 8, 60, 16)
+    gfx.fillTriangle(px(-30), y, px(-42), y - 10, px(-42), y + 10)
+    local flip = math.sin(phase) * 2
+    gfx.fillTriangle(px(28), y + flip, px(28), y - 6 + flip, px(38), y - 10 + flip)
+end
+
+local function drawWhales(wy)
+    for _, w in ipairs(World.whales) do
+        local x = Geom.bearingToScreenX(w.bearing, Scope.bearing,
+            Render.CENTER_X, Render.PX_PER_DEG)
+        if x > -50 and x < 450 then
+            local y = wy + w.depth
+            drawWhale(x, y, w.dir, w.phase)
+        end
+    end
 end
 
 local function drawLightRays(wy)
@@ -197,6 +300,8 @@ local function drawBelow(wy)
             drawFish(x, y, f.size, f.dir, f.phase)
         end
     end
+    drawSharks(wy)
+    drawWhales(wy)
     drawMurk(wy)
     gfx.clearClipRect()
 end
@@ -223,7 +328,9 @@ end
 
 local function drawWaterline(wy)
     gfx.setColor(gfx.kColorBlack)
-    for x = 92, 308, 2 do
+    local left = Render.CENTER_X - Render.RADIUS - 4
+    local right = Render.CENTER_X + Render.RADIUS + 4
+    for x = left, right, 2 do
         local y = wy + math.sin(x * 0.08 + t * 3) * 2
         gfx.fillRect(x, y, 2, 2)
     end
