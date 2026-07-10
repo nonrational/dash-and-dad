@@ -7,6 +7,7 @@ import "spy"
 import "render"
 import "ambience"
 import "shots"
+import "splash"
 
 playdate.display.setRefreshRate(30)
 
@@ -24,13 +25,19 @@ function playdate.update()
     if dt <= 0 or dt > 0.25 then
         dt = 1 / 30
     end
-    Scope.update(dt)
-    World.update(dt)
-    Spy.update(dt)
-    Render.draw(dt)
-    Ambience.update(dt)
-    if playdate.isCrankDocked() then
-        playdate.ui.crankIndicator:draw()
+
+    if Splash.active then
+        Splash.update()
+        Splash.draw()
+    else
+        Scope.update(dt)
+        World.update(dt)
+        Spy.update(dt)
+        Render.draw(dt)
+        Ambience.update(dt)
+        if playdate.isCrankDocked() then
+            playdate.ui.crankIndicator:draw()
+        end
     end
     Shots.update(dt)
 end

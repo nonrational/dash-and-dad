@@ -31,7 +31,7 @@
 
   If `source/tests.lua`'s boot assertions fail, `runTests()` throws before the update loop (and thus `Shots.update`) ever runs — the simulator hangs on an error dialog with **no screenshot file written** until `timeout -k` kills it. If boot succeeds, `Shots` writes every configured screenshot and then calls `playdate.simulator.exit()`, which segfaults when the simulator is launched this way (bypassing the normal `.app` launch path) — **that segfault is expected and not a failure signal**; only the presence/absence and content of the screenshot file(s) matter. Note also: a Lua *runtime* error (as opposed to a syntax error `pdc` would catch) produces this exact same "no screenshot, needs SIGKILL" signature — the simulator pauses its render thread rather than crashing the process. If a task's world/render changes are meant to be tested independently but the new code is only safe once a *later* task's code lands (e.g. a new entity type with no renderer yet), say so explicitly in that task's brief so the smoke test isn't misread as an environment problem.
 - Per the project's documented `shots.lua` convention: `Shots.plan` is edited to a temporary probe list to run a smoke test, then **reverted to `{}` before committing** — every task below does this explicitly.
-- **Splash screen** (added after the original 7 tasks, per direct user request): on boot, before any gameplay, show a plain white screen with two centered lines of text — `"For James, Love Dad"` and `"Press A to submerge..."` — dismissed by pressing the A button, after which the game proceeds exactly as before. No image assets; same default font already used for the HUD.
+- **Splash screen** (added after the original 7 tasks, per direct user request): on boot, before any gameplay, show a plain white screen with two centered lines of text — `"For Dash, Love Dad"` and `"Press A to submerge..."` — dismissed by pressing the A button, after which the game proceeds exactly as before. No image assets; same default font already used for the HUD.
 
 ---
 
@@ -1325,7 +1325,7 @@
   function Splash.draw()
       local gfx = playdate.graphics
       gfx.clear(gfx.kColorWhite)
-      gfx.drawTextAligned("For James, Love Dad", 200, 100, kTextAlignment.center)
+      gfx.drawTextAligned("For Dash, Love Dad", 200, 100, kTextAlignment.center)
       gfx.drawTextAligned("Press A to submerge...", 200, 130, kTextAlignment.center)
   end
   ```
@@ -1401,7 +1401,7 @@
   ls -la /tmp/submariner-task8-splash.png
   ```
 
-  Expected: file exists. Use the Read tool to view it and confirm both lines of text are present, centered, and legible: "For James, Love Dad" above "Press A to submerge...". No periscope view, HUD, or rail should be visible — the splash fully replaces the frame while active.
+  Expected: file exists. Use the Read tool to view it and confirm both lines of text are present, centered, and legible: "For Dash, Love Dad" above "Press A to submerge...". No periscope view, HUD, or rail should be visible — the splash fully replaces the frame while active.
 
   The dismiss-on-A-press transition itself can't be captured by this screenshot harness (it has no way to simulate a button press) — verify it by reading `source/splash.lua` and `source/main.lua` directly: confirm `Splash.update` flips `Splash.active` to `false` on `playdate.buttonJustPressed(playdate.kButtonA)`, and that `playdate.update` correctly branches on `Splash.active` to run either the splash or the normal game loop, never both in the same frame. The live "press A, does the game actually start" check belongs on the human acceptance checklist (Step 5 below).
 
@@ -1416,7 +1416,7 @@
   ```markdown
   ## Splash screen
 
-  - [ ] **Dedication text reads correctly**: on boot, "For James, Love Dad" and
+  - [ ] **Dedication text reads correctly**: on boot, "For Dash, Love Dad" and
     "Press A to submerge..." should both be legible and centered before
     anything else appears.
   - [ ] **A dismisses cleanly**: pressing A should immediately drop into the

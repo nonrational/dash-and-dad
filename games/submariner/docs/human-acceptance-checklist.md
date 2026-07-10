@@ -102,6 +102,14 @@ in Tasks 1-9. Run `make run`, play for a few minutes, and check each item.
   6-year-old (or someone unfamiliar with the game) and see whether they can
   find a few targets in a row without being told how.
 
+## Splash screen
+
+- [ ] **Dedication text reads correctly**: on boot, "For Dash, Love Dad" and
+  "Press A to submerge..." should both be legible and centered before
+  anything else appears.
+- [ ] **A dismisses cleanly**: pressing A should immediately drop into the
+  normal periscope view with no flash, stutter, or stuck frame.
+
 ## Notes from the Task 9 acceptance pass
 
 - The inverted-rect clip experiment (extending the near-lane clip by the

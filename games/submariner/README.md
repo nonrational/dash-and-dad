@@ -7,6 +7,10 @@ three full turns sweep from the depths to high above the waves. Boats and a
 lighthouse above the waterline with gull calls overhead; fish, bubbles, and
 deepening murk below. No objectives. Just watch the sea.
 
+## Demo
+
+<img width="485" height="685" alt="image" src="https://github.com/user-attachments/assets/895a7df1-67da-4e57-8eee-8c983ae2e80d" />
+
 ## Build
 
 Requires the [Playdate SDK](https://play.date/dev/) at `~/Developer/PlaydateSDK`.
