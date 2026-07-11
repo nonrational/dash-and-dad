@@ -2,6 +2,10 @@ import "game"
 
 Splash = { active = true }
 
+-- Pre-dithered 1-bit box art, exactly 400x240 (pdc thresholds at 50% and
+-- does not dither — see the asset-regeneration note in CLAUDE.md).
+local boxArt = playdate.graphics.image.new("images/splash")
+
 function Splash.update()
     if playdate.buttonJustPressed(playdate.kButtonA) or playdate.buttonJustPressed(playdate.kButtonB) then
         Splash.active = false
@@ -10,9 +14,14 @@ end
 
 function Splash.draw()
     local gfx = playdate.graphics
-    gfx.clear(gfx.kColorWhite)
-    gfx.drawTextAligned("FOOSBALL SHOOTOUT", 200, 70, kTextAlignment.center)
-    gfx.drawTextAligned("D-pad: line up   Crank: shoot", 200, 110, kTextAlignment.center)
-    gfx.drawTextAligned(string.format("Best streak: %d", Game.bestStreak), 200, 140, kTextAlignment.center)
-    gfx.drawTextAligned("Press A to kick off...", 200, 170, kTextAlignment.center)
+    boxArt:draw(0, 0)
+    -- The art is busy everywhere, so controls and the best streak ride in
+    -- a black bar over the box's fine-print strip at the bottom.
+    gfx.setColor(gfx.kColorBlack)
+    gfx.fillRect(0, 222, 400, 18)
+    gfx.setImageDrawMode(gfx.kDrawModeFillWhite)
+    gfx.drawTextAligned(
+        string.format("D-pad aim - Crank shoot - A start - Best %d", Game.bestStreak),
+        200, 224, kTextAlignment.center)
+    gfx.setImageDrawMode(gfx.kDrawModeCopy)
 end

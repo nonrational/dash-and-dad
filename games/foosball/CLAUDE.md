@@ -84,10 +84,17 @@ mouth rather than clamping instantly to a straight line.
 ## Constraints and gotchas
 
 - Sprite art (images) is **allowed** in this project, unlike submariner's
-  zero-asset rule — but none exists yet. `render.lua`'s player/goalie/ball
-  are simple code-drawn placeholder shapes, each behind one small,
-  single-purpose draw function, specifically so swapping in real sprites
-  later is a localized change rather than a redesign.
+  zero-asset rule. The splash box art (`source/images/splash.png`) is the
+  first real asset: `pdc` thresholds images at 50% and does **not**
+  dither, so assets must be pre-dithered 1-bit PNGs at their exact
+  on-screen size. Regenerate it from the original
+  (`assets/splash-box-art.png`, 1024×572 — wider than the screen's 5:3,
+  hence the fill-crop) with:
+  `ffmpeg -i assets/splash-box-art.png -vf "scale=430:240:flags=lanczos,crop=400:240,format=gray,scale=400:240:sws_dither=bayer,format=monob" source/images/splash.png`.
+  The player/goalie/ball in `render.lua` are still simple code-drawn
+  placeholder shapes, each behind one small, single-purpose draw function,
+  specifically so swapping in real sprites later is a localized change
+  rather than a redesign.
 - Audio stays fully synthesized (`playdate.sound` synths/filters), no audio
   files — this constraint, unlike the image-asset one, was kept from
   submariner's approach.
