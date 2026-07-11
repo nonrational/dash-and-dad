@@ -76,10 +76,10 @@ function Ball.update(dt)
     -- every single frame regardless of state, or crank motion during the
     -- ~1.3s "approach" phase accumulates undrained and dumps as one inflated
     -- reading the instant "window" opens, producing a velocity spike the
-    -- player never intended. (Splash.active gating Ball.update entirely,
-    -- once it exists, doesn't reintroduce this: Ball.state can't leave
-    -- "approach" while the splash is up, so the threshold check stays
-    -- unreachable regardless.)
+    -- player never intended. (Splash.active gating Ball.update entirely
+    -- doesn't reintroduce this: Ball.state can't leave "approach" while
+    -- the splash is up, so the threshold check stays unreachable
+    -- regardless.)
     local crankVelocity = math.abs(playdate.getCrankChange()) / dt
 
     if Ball.state == "approach" or Ball.state == "window" then
