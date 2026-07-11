@@ -1,6 +1,7 @@
 import "CoreLibs/graphics"
 import "geom"
 import "field"
+import "player"
 
 local gfx = playdate.graphics
 
@@ -34,8 +35,16 @@ local function drawGoal()
     gfx.fillRect(Field.GOAL_MIN, Field.GOAL_Y - 22, Field.GOAL_MAX - Field.GOAL_MIN, 22)
 end
 
+local function drawPlayerMarker()
+    gfx.setColor(gfx.kColorBlack)
+    local x, y = Player.x, Field.PLAYER_Y
+    gfx.fillCircleAtPoint(x, y - 14, 8)
+    gfx.fillTriangle(x - 12, y + 20, x + 12, y + 20, x, y - 4)
+end
+
 function Render.draw(dt)
     gfx.clear(gfx.kColorWhite)
     drawPitch()
     drawGoal()
+    drawPlayerMarker()
 end
