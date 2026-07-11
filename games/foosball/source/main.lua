@@ -6,6 +6,7 @@ import "player"
 import "ball"
 import "goalie"
 import "game"
+import "audio"
 import "render"
 import "shots"
 
@@ -17,6 +18,7 @@ Player.init()
 Ball.init()
 Goalie.init()
 Game.init()
+Audio.init()
 if playdate.isSimulator then
     runTests()
 end
@@ -33,8 +35,12 @@ function playdate.update()
     if Ball.state == "flightComplete" then
         Ball.resolve(Goalie.x)
     end
+    if Ball.contactJustNow then
+        Audio.onContact(Ball.contactPower)
+    end
     if Ball.resultPending then
         Game.onResult(Ball.result)
+        Audio.onResult(Ball.result)
     end
     Render.draw(dt)
     Shots.update(dt)

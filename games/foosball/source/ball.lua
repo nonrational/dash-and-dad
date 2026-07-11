@@ -12,6 +12,7 @@ Ball = {
     flightDuration = 0,
     result = nil,
     resultPending = false,
+    contactJustNow = false,
     resolvedTimer = 0,
 }
 
@@ -55,6 +56,7 @@ local function registerWhiff(result)
 end
 
 local function registerContact(velocity, dt)
+    Ball.contactJustNow = true
     Ball.contactX = Player.x
     Ball.shotTargetX = Geom.clamp(Player.x, Field.GOAL_MIN, Field.GOAL_MAX)
     Ball.contactPower = Geom.flickPower(velocity, Ball.REFERENCE_VELOCITY, Ball.POWER_MIN, Ball.POWER_MAX)
@@ -66,6 +68,7 @@ end
 
 function Ball.update(dt)
     Ball.resultPending = false
+    Ball.contactJustNow = false
 
     -- playdate.getCrankChange() returns the delta since it was last called,
     -- not since the last frame — it must be polled (and its value discarded)
