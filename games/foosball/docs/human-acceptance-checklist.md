@@ -34,9 +34,9 @@ in Tasks 1-11. Run `make run`, play for a few minutes, and check each item.
   impossible.
 - [ ] **Corner shots still work at high difficulty**: at a long streak, a
   hard, well-placed corner shot should still occasionally beat the goalie
-  (the spec's fairness math targets a persistent ~20px gap the goalie can
-  never cover in time — confirm this holds up in practice, not just on
-  paper).
+  (the spec's fairness math targets a persistent ~12px gap near each post
+  the goalie can never cover in time — confirm this holds up in practice,
+  not just on paper).
 - [ ] **Goalie doesn't react early**: watch the goalie during the
   approach/window phases (before your flick) — it should sit near center,
   not visibly anticipate your shot.

@@ -1,0 +1,100 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## What this is
+
+An arcade foosball shootout for the Playdate console (Lua, SDK 3.0.6). D-pad
+slides your player along a track; a ball is served toward a randomized lane;
+a crank flick inside a contact window strikes it past a goalie. Endless
+streak mode — no fixed end, the goalie gets tougher as your streak grows.
+The authoritative design spec (shot mechanics, goalie fairness math, module
+structure, v1 acceptance criteria) is
+`docs/superpowers/specs/2026-07-10-foosball-shootout-design.md`; the
+implementation plan with exact code and verification steps is
+`docs/superpowers/plans/2026-07-10-foosball-shootout.md`.
+
+## Commands
+
+Requires the Playdate SDK at `~/Developer/PlaydateSDK`.
+
+- `make build` — compile `source/` into `Foosball.pdx` with `pdc` (also
+  catches Lua syntax errors; there is no separate linter)
+- `make run` — build and launch in the Playdate Simulator
+- `make clean` — remove the `.pdx`
+
+## Testing and verification
+
+- **Unit tests** live in `source/tests.lua` as boot-time assertions, run
+  automatically when the game boots in the simulator (`runTests()` in
+  `main.lua`). There is no standalone test runner; a failure errors at
+  boot. They only cover `geom.lua`, which is kept free of `playdate.*`
+  calls precisely so it stays testable — preserve that boundary.
+- **Visual verification** uses the screenshot harness in `source/shots.lua`:
+  temporarily populate `Shots.plan` with
+  `{ after = <seconds>, target = <a Global table>, set = { <field> = <value> }, call = <function>, path = "<absolute .png path>" }`
+  entries, `make run` (or the headless smoke-test recipe in the
+  implementation plan's Global Constraints), and the simulator writes each
+  frame to disk then exits. `set` fields are pinned onto `target` every
+  frame so captures are deterministic; `call` runs once when an entry
+  becomes active, for side effects a field-pin can't express (e.g. forcing
+  a `playdate.datastore.write`). **Committed code always has an empty plan**
+  (`Shots.plan = {}`) — revert before committing.
+- Crank input (`playdate.getCrankChange()`) and real button presses
+  (`playdate.buttonJustPressed`) can't be scripted through this harness —
+  anything gated on them (crank flick feel, splash dismissal) is verified
+  by pinning the *downstream* state directly instead (e.g. forcing
+  `Ball.state = "flight"`, or `Splash.active = false`), with the actual
+  input feel deferred to `docs/human-acceptance-checklist.md`.
+- `docs/human-acceptance-checklist.md` lists everything that can only be
+  verified by live play (control feel, timing, audio, difficulty ramp) —
+  anything changed in those areas lands there for a human pass, not in
+  automated checks.
+
+## Architecture
+
+Modules are Playdate-style globals (`Geom`, `Field`, `Player`, `Ball`,
+`Goalie`, `Game`, `Render`, `Audio`, `Splash`) loaded via `import`, not
+`require`. Dependencies are deliberately one-way, including across the two
+modules whose *mechanic* is inherently mutual:
+
+- `main.lua` wires init and the 30fps update loop: `Player.update → Ball.update → Goalie.update → (Ball.resolve, if a flight just completed) → Game/Audio event reactions → Render.draw`
+- `ball.lua` owns the serve state machine (`approach → window → flight → flightComplete → resolved`) and never reads `Goalie` — `goalie.lua` reads `Ball.state`/`Ball.shotTargetX` one-way to decide where to move, and it's `main.lua` (not `ball.lua`) that reads `Goalie.x` back and passes it into `Ball.resolve(goalieX)` as an explicit parameter. This keeps every module's dependency direction one-way even though the shot-resolution mechanic itself needs both sides.
+- `goalie.lua` takes `streak` as a parameter to `Goalie.update(dt, streak)` rather than reading `Game` directly, for the same reason.
+- `render.lua` reads `Player`/`Ball`/`Goalie`/`Game`; `audio.lua` and `game.lua` react to one-frame event flags (`Ball.contactJustNow`, `Ball.resultPending`) that `main.lua` checks and dispatches — neither module polls `Ball`'s state machine directly.
+- `geom.lua` is pure math shared by all of the above (`clamp`, `lerp`, `inBand`, `flickPower`, `shotFlightTime`, `goalieSpeed`) — no `playdate.*` calls, so it's the one module with boot-time unit tests.
+
+**Coordinate model**: screen 400×240. Track (player) `x ∈ [50, 350]` at
+`y = 205`; goal `x ∈ [140, 260]` at `y = 50`. The goalie moves within that
+same `[140, 260]` range, resting at `x = 200` — it never needs to defend
+outside the posts, since shot aim (`Ball.shotTargetX`) is always clamped
+inside the goal frame too. A served ball's `x` (its lane) stays fixed while
+`y`/scale interpolate from the goal
+end (small/far) to the player's track (large/near) as approach progress
+goes 0→1. On contact, `Ball.contactX` (the raw player position, in
+track-space — used for the contact-band check) is distinct from
+`Ball.shotTargetX` (that same position clamped into goal-space via
+`Geom.clamp` — used for the goalie's target and the save check), so a shot
+struck from a wide track position still visually flies toward the goal
+mouth rather than clamping instantly to a straight line.
+
+## Constraints and gotchas
+
+- Sprite art (images) is **allowed** in this project, unlike submariner's
+  zero-asset rule — but none exists yet. `render.lua`'s player/goalie/ball
+  are simple code-drawn placeholder shapes, each behind one small,
+  single-purpose draw function, specifically so swapping in real sprites
+  later is a localized change rather than a redesign.
+- Audio stays fully synthesized (`playdate.sound` synths/filters), no audio
+  files — this constraint, unlike the image-asset one, was kept from
+  submariner's approach.
+- `setDitherPattern`'s alpha runs backwards for black ink (0 = solid
+  black). Use the `setInk(darkness)` helper in `render.lua` rather than
+  calling it directly.
+- `Geom.inBand(x, center, halfWidth)` is deliberately generic — it backs
+  both the player's contact-band check (is the player close enough to the
+  ball's lane?) and the goalie's save check (is the goalie close enough to
+  the shot's target?). Don't fork it into two near-duplicate functions.
+- `math.random` is used for serve lane randomization in `ball.lua` — fine,
+  since automated tests bypass it entirely by pinning `Ball.laneX` directly
+  through the `Shots` harness rather than relying on captured randomness.
