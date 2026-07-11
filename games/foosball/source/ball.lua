@@ -105,7 +105,20 @@ function Ball.update(dt)
 
         if Ball.state == "window" and Ball.progress >= 1.0 then
             Ball.progress = 1.0
-            registerWhiff("tooSlow")
+            if Geom.inBand(Player.x, Ball.laneX, Field.CONTACT_BAND_HALF) then
+                -- Lined up but never flicked: the man traps the ball at
+                -- his feet instead of whiffing. It rides Player.x until a
+                -- flick sends it through the normal contact path.
+                Ball.state = "held"
+            else
+                registerWhiff("tooSlow")
+            end
+        end
+    elseif Ball.state == "held" then
+        -- No band check here: a held ball is at the player's feet by
+        -- definition, so any strong-enough flick kicks it.
+        if crankVelocity >= Ball.FLICK_THRESHOLD then
+            registerContact(crankVelocity, dt)
         end
     elseif Ball.state == "flight" then
         Ball.flightT = Ball.flightT + dt
@@ -156,6 +169,8 @@ end
 function Ball.screenX()
     if Ball.state == "flight" or Ball.state == "flightComplete" then
         return Geom.lerp(Ball.contactX, Ball.shotTargetX, flightProgress())
+    elseif Ball.state == "held" then
+        return Player.x
     elseif ballAtGoal() then
         return Ball.restX
     end
@@ -170,6 +185,10 @@ end
 function Ball.screenY()
     if Ball.state == "flight" or Ball.state == "flightComplete" then
         return Geom.lerp(Field.PLAYER_Y, Field.GOAL_Y, flightProgress())
+    elseif Ball.state == "held" then
+        -- A touch below the track line, so the ball sits visibly at the
+        -- figure's feet instead of hiding behind the foot block.
+        return Field.PLAYER_Y + 9
     elseif ballAtGoal() then
         return Ball.restY
     end
@@ -179,6 +198,8 @@ end
 function Ball.screenScale()
     if Ball.state == "flight" or Ball.state == "flightComplete" then
         return Geom.lerp(Field.BALL_MAX_SCALE, Field.BALL_MIN_SCALE, flightProgress())
+    elseif Ball.state == "held" then
+        return Field.BALL_MAX_SCALE
     elseif ballAtGoal() then
         return Field.BALL_MIN_SCALE
     end

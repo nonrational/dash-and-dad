@@ -16,6 +16,11 @@ function Goalie.update(dt, streak)
     local target = Field.GOALIE_CENTER
     if Ball.state == "flight" or Ball.state == "flightComplete" then
         target = Ball.shotTargetX
+    elseif Ball.state == "held" then
+        -- Shadow the presumptive shot while the player holds the ball:
+        -- the held ball rides the player's x, so tracking the ball keeps
+        -- the hold fair without reading Player directly.
+        target = Geom.clamp(Ball.screenX(), Field.GOAL_MIN, Field.GOAL_MAX)
     elseif Ball.state == "resolved" and Ball.result == "save" then
         -- Hold the block through the SAVED banner: drifting home would
         -- abandon the ball the goalie just stopped.

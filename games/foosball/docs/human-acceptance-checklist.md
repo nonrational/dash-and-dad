@@ -33,6 +33,11 @@ in Tasks 1-11. Run `make run`, play for a few minutes, and check each item.
   explanation for what happened.
 - [ ] **Power feel**: a hard, fast flick should visibly send the ball to
   the goal noticeably faster than a light one at/near the threshold.
+- [ ] **Trap-and-hold**: let a serve run out while lined up (in band, no
+  flick) — the ball should stick at your feet instead of "TOO SLOW", ride
+  with you as you slide, and a later flick should kick it with normal
+  aim/power; the goalie should keep shadowing you the whole hold. An
+  out-of-band expiry should still read "TOO SLOW".
 
 ## Goalie difficulty (Task 7)
 

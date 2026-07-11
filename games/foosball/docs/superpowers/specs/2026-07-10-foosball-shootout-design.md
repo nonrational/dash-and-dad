@@ -233,3 +233,23 @@ whiff types, which are normal gameplay outcomes, not errors.
   layer.
 - Curved shots (crank direction, not just speed, bending the flight path).
 - Wide/crossbar misses instead of always-clamped aim.
+
+## Addendum (2026-07-11): trap-and-hold
+
+Requested from live play. If the contact window expires while the player is
+**inside the contact band** (lined up, but no flick), the ball is trapped
+at the player's feet instead of whiffing "TOO SLOW" — a new `held` state in
+`ball.lua`'s machine, between `window` and `flight`:
+
+- While `held`, the ball rides `Player.x` (drawn slightly below the track
+  line, at the figure's feet) and there is no time limit on the hold.
+- Any flick past the normal threshold kicks it through the standard
+  contact path — aim from the current player x (clamped into the goal),
+  power from flick velocity. No band check: a held ball is at the feet by
+  definition.
+- The goalie shadows the held ball (`Ball.screenX()` clamped into the goal
+  range) at its normal streak-ramped speed, so holding repositions the duel
+  but never freezes the keeper — fairness comes from the same speed math as
+  a normal serve.
+- An expiry **outside** the band still whiffs "TOO SLOW"; flicking while
+  out of band still whiffs "MISSED THE BALL".
