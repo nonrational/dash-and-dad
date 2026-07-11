@@ -5,6 +5,7 @@ import "field"
 import "player"
 import "ball"
 import "goalie"
+import "game"
 import "render"
 import "shots"
 
@@ -15,6 +16,7 @@ Render.init()
 Player.init()
 Ball.init()
 Goalie.init()
+Game.init()
 if playdate.isSimulator then
     runTests()
 end
@@ -27,9 +29,12 @@ function playdate.update()
     end
     Player.update(dt)
     Ball.update(dt)
-    Goalie.update(dt, 0) -- streak wiring lands in Task 8
+    Goalie.update(dt, Game.streak)
     if Ball.state == "flightComplete" then
         Ball.resolve(Goalie.x)
+    end
+    if Ball.resultPending then
+        Game.onResult(Ball.result)
     end
     Render.draw(dt)
     Shots.update(dt)

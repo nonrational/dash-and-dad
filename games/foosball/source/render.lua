@@ -4,6 +4,7 @@ import "field"
 import "player"
 import "ball"
 import "goalie"
+import "game"
 
 local gfx = playdate.graphics
 
@@ -55,6 +56,11 @@ local function drawBallMarker()
     gfx.fillCircleAtPoint(Ball.screenX(), Ball.screenY(), 6 * Ball.screenScale())
 end
 
+local function drawHUD()
+    gfx.drawTextAligned(string.format("STREAK %d", Game.streak), 80, 12, kTextAlignment.center)
+    gfx.drawTextAligned(string.format("BEST %d", Game.bestStreak), 320, 12, kTextAlignment.center)
+end
+
 function Render.draw(dt)
     gfx.clear(gfx.kColorWhite)
     drawPitch()
@@ -62,4 +68,5 @@ function Render.draw(dt)
     drawGoalieMarker()
     drawBallMarker()
     drawPlayerMarker()
+    drawHUD()
 end
