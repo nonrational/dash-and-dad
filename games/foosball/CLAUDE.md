@@ -114,3 +114,6 @@ mouth rather than clamping instantly to a straight line.
   during that time, so the flick-threshold check — nested inside `window`
   only — stays unreachable until well after normal per-frame draining
   resumes post-dismissal.)
+  (`player.lua`'s `Player.crankAngle` uses `playdate.getCrankPosition()` — a
+  separate absolute read with no accumulator — so it is exempt from this
+  rule and safe to guard behind the dock check.)

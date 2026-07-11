@@ -8,6 +8,9 @@ in Tasks 1-11. Run `make run`, play for a few minutes, and check each item.
 
 - [ ] **Track speed**: 260px/s — check whether sliding corner-to-corner
   feels responsive or sluggish/twitchy.
+- [ ] **Kick leg tracking**: tracks the crank 1:1 with no perceptible lag;
+  a flick reads as a kick through the ball, and docking the crank parks the
+  leg.
 
 ## Contact mechanics (Task 6)
 
