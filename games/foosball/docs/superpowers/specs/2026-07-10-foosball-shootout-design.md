@@ -51,10 +51,11 @@ streak persists across sessions.
   [50, 350] (300px). The player sprite sits at a fixed y near the bottom,
   large scale (foreground).
 - **Goal (far edge):** a narrower x-range near the top, e.g. x ∈ [140, 260]
-  (120px), with a goalie sprite that moves within a slightly wider band
-  (small overhang past the posts so it can commit toward a corner). Small
-  scale (background), consistent with submariner's "distance = smaller +
-  higher on screen" depth cue.
+  (120px). The goalie sprite moves along this same range — since shot aim
+  is always clamped inside the goal frame (no wide misses, see Non-Goals),
+  the goalie never needs to defend outside the posts either. Small scale
+  (background), consistent with submariner's "distance = smaller + higher
+  on screen" depth cue.
 - **Ball:** one `progress` value p ∈ [0, 1] per serve drives both position
   and scale. `ball.x` stays fixed at that serve's lane x (it's travelling
   straight toward the camera, not sideways); `ball.y` and `ball.scale`
@@ -79,7 +80,10 @@ Each serve:
    - **Aim** = the player's exact x-position within the band at that instant
      — not just "in range," but precisely where, so lining up isn't binary.
    - **Power** = measured flick speed normalized against a reference velocity
-     of 1800°/s, clamped to [0.4, 1.0].
+     of 1800°/s, clamped to [0.5, 1.0] — 0.5 is the power at exactly the
+     900°/s threshold velocity, so there's no lower floor to reach below
+     that; a sub-threshold flick never registers as a strike in the first
+     place.
 5. Flicks before the window opens are simply not evaluated yet — winding up
    early costs nothing; only the flick's state once the window is open
    matters, so a sustained fast spin carried into the window still registers.
@@ -98,16 +102,15 @@ power — harder shots leave the goalie less time to react.
 
 The goalie has no information before contact — it only starts moving once
 your shot's target x is known, which keeps it feeling fair rather than
-psychic. It moves toward that target at `min(180 + 12 × streak, 360)` px/s
-(base 180px/s, ramping 12px/s per streak point, capped at 360px/s). The
-goalie's track spans the goal width plus a 40px overhang on each side (200px
-total, ±100px from center). It rests at center between serves, so the
-worst case for the player is a maxed-out goalie already centered when a
-maximum-power shot is aimed at either extreme corner (100px away): it can
-cover at most `360 × 0.22 ≈ 79px` before that shot arrives — short of the
-100px it needs, leaving roughly a 20px window of goal that's unreachable
-even at max difficulty. Exact constants are starting points, to be tuned by
-playtesting like submariner's.
+psychic. It moves toward that target at `min(140 + 8 × streak, 220)` px/s
+(base 140px/s, ramping 8px/s per streak point, capped at 220px/s — the ramp
+reaches its cap right around streak 10). It rests at center between serves,
+so the worst case for the player is a maxed-out goalie already centered
+when a maximum-power shot is aimed at either post — 60px away, half the
+120px goal width. It can cover at most `220 × 0.22 ≈ 48px` before that
+shot arrives — short of the 60px it needs, leaving a persistent ~12px gap
+near each post that's unreachable even at max difficulty. Exact constants
+are starting points, to be tuned by playtesting like submariner's.
 
 - Streak +1 on a goal.
 - Streak resets to 0 on a save or either whiff type.

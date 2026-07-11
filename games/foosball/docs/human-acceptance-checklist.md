@@ -1,0 +1,77 @@
+# Human acceptance checklist
+
+Everything below requires live play (d-pad/crank feel, timing, or actual
+audio) and could not be verified by the autonomous screenshot harness used
+in Tasks 1-11. Run `make run`, play for a few minutes, and check each item.
+
+## Player movement (Task 4)
+
+- [ ] **Track speed**: 260px/s — check whether sliding corner-to-corner
+  feels responsive or sluggish/twitchy.
+
+## Contact mechanics (Task 6)
+
+- [ ] **Flick threshold feel**: 900°/s — check whether a natural, confident
+  crank flick reliably registers, and a light wrist twitch doesn't
+  accidentally fire a shot.
+- [ ] **Contact band width**: 45px half-width (90px total) — check whether
+  lining up feels achievably precise, not frustratingly narrow or trivially
+  wide.
+- [ ] **Contact window timing**: the window opens at 82% of a 1.6s serve
+  (~0.29s to react) — check whether this gives enough time to read the ball
+  and react, without feeling like there's no urgency at all.
+- [ ] **Missed-ball vs too-slow distinction**: intentionally flick
+  early/out-of-band once, and intentionally not flick at all once — check
+  that "MISSED THE BALL" and "TOO SLOW" each feel like the right
+  explanation for what happened.
+- [ ] **Power feel**: a hard, fast flick should visibly send the ball to
+  the goal noticeably faster than a light one at/near the threshold.
+
+## Goalie difficulty (Task 7)
+
+- [ ] **Difficulty ramp**: build a streak of 10+ — the goalie should feel
+  noticeably tougher to beat than on the first few shots, without feeling
+  impossible.
+- [ ] **Corner shots still work at high difficulty**: at a long streak, a
+  hard, well-placed corner shot should still occasionally beat the goalie
+  (the spec's fairness math targets a persistent ~20px gap the goalie can
+  never cover in time — confirm this holds up in practice, not just on
+  paper).
+- [ ] **Goalie doesn't react early**: watch the goalie during the
+  approach/window phases (before your flick) — it should sit near center,
+  not visibly anticipate your shot.
+
+## Audio (Task 9) — all items require actually hearing the game
+
+- [ ] **Kick thump**: on contact, check it reads as a satisfying "kick,"
+  and that harder flicks noticeably sound harder.
+- [ ] **Goal net swish**: check it reads distinctly as a "score" sound, not
+  similar to the save whoosh.
+- [ ] **Save whoosh**: check it reads distinctly as a "blocked" sound.
+- [ ] **Whiff sting**: check it reads as a clear "miss" cue, and doesn't
+  sound so similar to the other three that outcomes blur together with
+  your eyes closed.
+- [ ] **Crowd bed**: check the constant low murmur sits under everything
+  else at a sensible volume — audible but not distracting.
+
+## Splash screen (Task 10)
+
+- [ ] **Dismiss feel**: pressing A should immediately drop into gameplay
+  with no flash, stutter, or stuck frame.
+- [ ] **Best streak display**: confirm the number shown on the splash
+  matches the actual persisted best (check after intentionally beating
+  your best once, then relaunching).
+
+## Overall loop
+
+- [ ] **Endless streak pacing**: play for several minutes — check whether
+  "reset to 0 on any miss" feels appropriately tense/replayable rather
+  than punishing enough to make you want to quit.
+- [ ] **Placeholder art readability**: the player/goalie/ball are simple
+  code-drawn shapes (sprite art was deferred — see the implementation
+  plan's Global Constraints) — confirm they're still readable at a glance
+  from the "behind the player" camera angle, distinguishing which is which
+  without hesitation.
+- [ ] **Device-only**: if testing on real hardware, confirm the 1-bit
+  display reads clearly in different lighting, and that the crank feels
+  good physically (not just in the simulator's mouse-drag crank emulation).
