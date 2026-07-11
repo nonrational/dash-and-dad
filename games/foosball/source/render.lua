@@ -72,18 +72,23 @@ local function drawRod()
     gfx.fillRect(leftX, ROD_Y - 2, rightX - leftX, 4)
 end
 
--- Foosball-man silhouette in figure-local coordinates: origin at the rod,
--- y down, upright pose, symmetric like the classic table man seen from
--- behind. The crank tips the figure forward/backward around the rod axis,
+-- Foosball-man silhouette in figure-local coordinates: origin at the rod
+-- boss in the chest, y down, upright pose, matching the classic molded
+-- table man seen from behind: boxy square-shouldered torso, a shirt-hem
+-- step into a narrower fused-leg column, and a foot block wider than the
+-- ankles. The crank tips the figure forward/backward around the rod axis,
 -- so a vertex keeps its x and has its y foreshortened by cos(angle); the
 -- head stays a circle at every angle, as a sphere should.
 local FIGURE_BODY = {
-    -8, -10, 8, -10, -- shoulders
-    5, 4, 3.5, 14, -- right side: hip down to the ankle
-    8, 20, -8, 20, -- foot flare, sole
-    -3.5, 14, -5, 4, -- left side: ankle back up to the hip
+    -10, -10, 10, -10, -- shoulders
+    10, 4, 4, 4, -- right torso side, shirt hem step
+    4, 14, 7, 14, -- right leg, step out to the foot block
+    7, 20, -7, 20, -- foot block side, sole
+    -7, 14, -4, 14, -- left foot step back to the leg
+    -4, 4, -10, 4, -- left leg, shirt hem step
 }
 local HEAD_LY, HEAD_R = -16, 6
+local FOOT_LY, FOOT_HALF_W = 17, 7
 
 local function drawPlayerMarker()
     -- The figure tips 1:1 with the crank (0 = upright): cranking swings
@@ -120,6 +125,10 @@ local function drawPlayerMarker()
         gfx.setColor(gfx.kColorBlack)
         gfx.fillPolygon(table.unpack(pts))
         gfx.setLineWidth(1)
+        -- The rod boss in the chest, like the molded hole in a real man.
+        -- It sits on the rotation axis, so it never moves with the tip.
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillCircleAtPoint(x, ROD_Y, 2)
     end
     local function drawHead()
         gfx.setColor(gfx.kColorWhite)
@@ -127,13 +136,29 @@ local function drawPlayerMarker()
         gfx.setColor(gfx.kColorBlack)
         gfx.fillCircleAtPoint(x, headY, headR)
     end
+    -- The sole of the foot block, seen face-on. Unlike the body polygon
+    -- it grows with |sin| instead of collapsing with cos — it's the
+    -- surface you're looking at when the feet point at the camera, and
+    -- its own halo keeps the figure from vanishing there.
+    local function drawFoot()
+        local footY = ROD_Y + FOOT_LY * c
+        local h = 2 + 6 * math.abs(s)
+        gfx.setColor(gfx.kColorWhite)
+        gfx.fillRoundRect(x - FOOT_HALF_W - 2, footY - h / 2 - 2,
+            FOOT_HALF_W * 2 + 4, h + 4, 4)
+        gfx.setColor(gfx.kColorBlack)
+        gfx.fillRoundRect(x - FOOT_HALF_W, footY - h / 2,
+            FOOT_HALF_W * 2, h, 3)
+    end
 
     if s >= 0 then
+        drawFoot()
         drawBody()
         drawHead()
     else
         drawHead()
         drawBody()
+        drawFoot()
     end
 end
 
