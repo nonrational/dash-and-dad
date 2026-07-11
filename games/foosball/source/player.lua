@@ -22,8 +22,8 @@ function Player.update(dt)
     -- Absolute crank angle for the kick-leg pose. getCrankPosition() is
     -- independent of ball.lua's getCrankChange() drain — reading it here
     -- touches no accumulator. Guarded on dock state so a docked crank
-    -- parks the leg — which also lets the Shots harness pin crankAngle
-    -- for deterministic captures (the crank itself can't be scripted).
+    -- freezes the leg at its last pose — which also lets the Shots harness pin
+    -- crankAngle for deterministic captures (the crank itself can't be scripted).
     if not playdate.isCrankDocked() then
         Player.crankAngle = playdate.getCrankPosition()
     end

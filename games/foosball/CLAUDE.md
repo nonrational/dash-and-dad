@@ -62,7 +62,7 @@ modules whose *mechanic* is inherently mutual:
 - `ball.lua` owns the serve state machine (`approach → window → flight → flightComplete → resolved`) and never reads `Goalie` — `goalie.lua` reads `Ball.state`/`Ball.shotTargetX` one-way to decide where to move, and it's `main.lua` (not `ball.lua`) that reads `Goalie.x` back and passes it into `Ball.resolve(goalieX)` as an explicit parameter. This keeps every module's dependency direction one-way even though the shot-resolution mechanic itself needs both sides.
 - `goalie.lua` takes `streak` as a parameter to `Goalie.update(dt, streak)` rather than reading `Game` directly, for the same reason. During a saved ball's resolved pause (`Ball.result == "save"`) the goalie holds its position instead of drifting home, so the block stays visually attached to the ball it stopped.
 - `render.lua` reads `Player`/`Ball`/`Goalie`/`Game`; `audio.lua` and `game.lua` react to one-frame event flags (`Ball.contactJustNow`, `Ball.resultPending`) that `main.lua` checks and dispatches — neither module polls `Ball`'s state machine directly.
-- `geom.lua` is pure math shared by all of the above (`clamp`, `lerp`, `inBand`, `flickPower`, `shotFlightTime`, `goalieSpeed`) — no `playdate.*` calls, so it's the one module with boot-time unit tests.
+- `geom.lua` is pure math shared by all of the above (`clamp`, `lerp`, `projectX`, `inBand`, `flickPower`, `shotFlightTime`, `goalieSpeed`) — no `playdate.*` calls, so it's the one module with boot-time unit tests.
 
 **Coordinate model**: screen 400×240. Track (player) `x ∈ [50, 350]` at
 `y = 205`; goal `x ∈ [140, 260]` at `y = 50`. The goalie moves within that

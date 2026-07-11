@@ -8,9 +8,9 @@ in Tasks 1-11. Run `make run`, play for a few minutes, and check each item.
 
 - [ ] **Track speed**: 260px/s — check whether sliding corner-to-corner
   feels responsive or sluggish/twitchy.
-- [ ] **Kick leg tracking**: tracks the crank 1:1 with no perceptible lag;
-  a flick reads as a kick through the ball, and docking the crank parks the
-  leg.
+- [ ] **Kick leg**: tracks the crank 1:1 with no perceptible lag; a flick
+  reads as a kick through the ball, and docking the crank freezes the leg
+  at its last pose.
 
 ## Contact mechanics (Task 6)
 
@@ -82,4 +82,4 @@ in Tasks 1-11. Run `make run`, play for a few minutes, and check each item.
   stops at the goalie (never in the net) and the goalie holds the block for
   the whole SAVED banner.
 - [ ] **Goal rest pose**: a goal reads at a glance in live play — the ball
-  visibly sits in the net, hatched over by the net fill.
+  sits inside the net frame, behind the goalie.

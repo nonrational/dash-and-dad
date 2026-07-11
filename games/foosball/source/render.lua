@@ -12,6 +12,8 @@ Render = {}
 
 -- setDitherPattern's alpha runs backwards for black ink (0 = solid black),
 -- so express everything as "darkness" in [0,1] and invert here.
+-- (Observed SDK behavior, capture-verified; the manual documents the
+-- opposite convention — don't "fix" this from the docs.)
 local function setInk(darkness)
     gfx.setColor(gfx.kColorBlack)
     gfx.setDitherPattern(1 - darkness, gfx.image.kDitherTypeBayer8x8)
@@ -106,9 +108,12 @@ local function drawResultBanner()
     end
 end
 
--- A scored ball draws before the goal so the net's dither hatches over it
--- — visibly *in* the net. A saved ball draws after the goalie (normal
--- order), sitting in front of the figure that blocked it.
+-- A scored ball draws before the goal and goalie, so it sits behind the
+-- net plane and the goalie occludes it while drifting home — visibly *in*
+-- the net. (The net's dither fill only adds black pixels, so it can't
+-- hatch over a black ball; the layering is what sells the depth.) A saved
+-- ball draws after the goalie (normal order), in front of the figure
+-- that blocked it.
 local function ballInNet()
     return Ball.state == "resolved" and Ball.result == "goal"
 end
