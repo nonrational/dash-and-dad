@@ -40,7 +40,9 @@ function Audio.onResult(result)
         goalChime:playNote(880, 0.3, 0.25)
     elseif result == "save" then
         saveWhoosh:playNote(300, 0.3, 0.15)
+    elseif result == "missedBall" then
+        whiffSting:playNote(180, 0.2, 0.08)
     else
-        whiffSting:playNote(220, 0.2, 0.08)
+        whiffSting:playNote(260, 0.2, 0.08)
     end
 end

@@ -58,7 +58,7 @@ Modules are Playdate-style globals (`Geom`, `Field`, `Player`, `Ball`,
 `require`. Dependencies are deliberately one-way, including across the two
 modules whose *mechanic* is inherently mutual:
 
-- `main.lua` wires init and the 30fps update loop: `Player.update → Ball.update → Goalie.update → (Ball.resolve, if a flight just completed) → Game/Audio event reactions → Render.draw`
+- `main.lua` wires init and the 30fps update loop, gated behind `Splash.active`: while the splash is up, only `Splash.update`/`Splash.draw` run; once dismissed, every frame runs `Player.update → Ball.update → Goalie.update → (Ball.resolve, if a flight just completed) → Game/Audio event reactions → Render.draw`. `Shots.update` always runs, outside that gate, regardless of splash state.
 - `ball.lua` owns the serve state machine (`approach → window → flight → flightComplete → resolved`) and never reads `Goalie` — `goalie.lua` reads `Ball.state`/`Ball.shotTargetX` one-way to decide where to move, and it's `main.lua` (not `ball.lua`) that reads `Goalie.x` back and passes it into `Ball.resolve(goalieX)` as an explicit parameter. This keeps every module's dependency direction one-way even though the shot-resolution mechanic itself needs both sides.
 - `goalie.lua` takes `streak` as a parameter to `Goalie.update(dt, streak)` rather than reading `Game` directly, for the same reason.
 - `render.lua` reads `Player`/`Ball`/`Goalie`/`Game`; `audio.lua` and `game.lua` react to one-frame event flags (`Ball.contactJustNow`, `Ball.resultPending`) that `main.lua` checks and dispatches — neither module polls `Ball`'s state machine directly.
@@ -106,3 +106,8 @@ mouth rather than clamping instantly to a straight line.
   `window` opens, producing a velocity spike the player never intended.
   This was a real bug found and fixed during Task 6's review; see the
   comment above the `playdate.getCrankChange()` call in `source/ball.lua`.
+  (The splash screen doesn't reintroduce this: `Ball.update` never runs
+  while `Splash.active`, but `Ball.state` also can't move off `"approach"`
+  during that time, so the flick-threshold check — nested inside `window`
+  only — stays unreachable until well after normal per-frame draining
+  resumes post-dismissal.)

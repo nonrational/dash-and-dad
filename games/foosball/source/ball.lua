@@ -1,5 +1,6 @@
 import "geom"
 import "field"
+import "player"
 
 Ball = {
     state = "approach",
@@ -73,9 +74,12 @@ function Ball.update(dt)
     -- playdate.getCrankChange() returns the delta since it was last called,
     -- not since the last frame — it must be polled (and its value discarded)
     -- every single frame regardless of state, or crank motion during the
-    -- ~1.3s "approach" phase (or an entire splash screen, once Splash exists)
-    -- accumulates undrained and dumps as one inflated reading the instant
-    -- "window" opens, producing a velocity spike the player never intended.
+    -- ~1.3s "approach" phase accumulates undrained and dumps as one inflated
+    -- reading the instant "window" opens, producing a velocity spike the
+    -- player never intended. (Splash.active gating Ball.update entirely,
+    -- once it exists, doesn't reintroduce this: Ball.state can't leave
+    -- "approach" while the splash is up, so the threshold check stays
+    -- unreachable regardless.)
     local crankVelocity = math.abs(playdate.getCrankChange()) / dt
 
     if Ball.state == "approach" or Ball.state == "window" then

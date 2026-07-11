@@ -1,5 +1,4 @@
 import "CoreLibs/graphics"
-import "geom"
 import "field"
 import "player"
 import "ball"
@@ -32,10 +31,10 @@ local function drawPitch()
 end
 
 local function drawGoal()
-    gfx.setColor(gfx.kColorBlack)
-    gfx.drawRect(Field.GOAL_MIN, Field.GOAL_Y - 22, Field.GOAL_MAX - Field.GOAL_MIN, 22)
     setInk(0.15)
     gfx.fillRect(Field.GOAL_MIN, Field.GOAL_Y - 22, Field.GOAL_MAX - Field.GOAL_MIN, 22)
+    setInk(1.0)
+    gfx.drawRect(Field.GOAL_MIN, Field.GOAL_Y - 22, Field.GOAL_MAX - Field.GOAL_MIN, 22)
 end
 
 local function drawGoalieMarker()

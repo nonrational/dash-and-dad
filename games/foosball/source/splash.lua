@@ -1,7 +1,9 @@
+import "game"
+
 Splash = { active = true }
 
 function Splash.update()
-    if playdate.buttonJustPressed(playdate.kButtonA) then
+    if playdate.buttonJustPressed(playdate.kButtonA) or playdate.buttonJustPressed(playdate.kButtonB) then
         Splash.active = false
     end
 end

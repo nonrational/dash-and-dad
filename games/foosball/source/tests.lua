@@ -8,6 +8,12 @@ function runTests()
         end
     end
 
+    local function ok(cond, msg)
+        if not cond then
+            error(string.format("FAIL %s: expected true", msg))
+        end
+    end
+
     eq(Geom.clamp(5, 0, 1), 1, "clamp high")
     eq(Geom.clamp(-5, 0, 1), 0, "clamp low")
     eq(Geom.clamp(0.5, 0, 1), 0.5, "clamp inside")
@@ -16,6 +22,10 @@ function runTests()
     eq(Geom.lerp(0, 10, 1), 10, "lerp at 1")
     eq(Geom.lerp(0, 10, 0.5), 5, "lerp at midpoint")
     eq(Geom.lerp(10, 0, 0.25), 7.5, "lerp descending")
+
+    ok(Geom.inBand(100, 100, 45), "inBand at center")
+    ok(Geom.inBand(145, 100, 45), "inBand exactly at boundary")
+    ok(not Geom.inBand(146, 100, 45), "inBand just outside boundary")
 
     eq(Geom.flickPower(1800, 1800, 0.5, 1.0), 1.0, "flick power at reference velocity")
     eq(Geom.flickPower(900, 1800, 0.5, 1.0), 0.5, "flick power at threshold velocity")
