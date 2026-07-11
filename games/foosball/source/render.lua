@@ -2,6 +2,7 @@ import "CoreLibs/graphics"
 import "geom"
 import "field"
 import "player"
+import "ball"
 
 local gfx = playdate.graphics
 
@@ -42,9 +43,15 @@ local function drawPlayerMarker()
     gfx.fillTriangle(x - 12, y + 20, x + 12, y + 20, x, y - 4)
 end
 
+local function drawBallMarker()
+    gfx.setColor(gfx.kColorBlack)
+    gfx.fillCircleAtPoint(Ball.screenX(), Ball.screenY(), 6 * Ball.screenScale())
+end
+
 function Render.draw(dt)
     gfx.clear(gfx.kColorWhite)
     drawPitch()
     drawGoal()
+    drawBallMarker()
     drawPlayerMarker()
 end
