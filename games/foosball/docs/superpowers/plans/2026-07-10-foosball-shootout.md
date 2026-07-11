@@ -853,6 +853,14 @@ end
 function Ball.update(dt)
     Ball.resultPending = false
 
+    -- playdate.getCrankChange() returns the delta since it was last called,
+    -- not since the last frame — it must be polled (and its value discarded)
+    -- every single frame regardless of state, or crank motion during the
+    -- ~1.3s "approach" phase (or an entire splash screen, once Splash exists)
+    -- accumulates undrained and dumps as one inflated reading the instant
+    -- "window" opens, producing a velocity spike the player never intended.
+    local crankVelocity = math.abs(playdate.getCrankChange()) / dt
+
     if Ball.state == "approach" or Ball.state == "window" then
         Ball.progress = Ball.progress + dt / Ball.T_SERVE
 
@@ -861,10 +869,9 @@ function Ball.update(dt)
         end
 
         if Ball.state == "window" then
-            local velocity = math.abs(playdate.getCrankChange()) / dt
-            if velocity >= Ball.FLICK_THRESHOLD then
+            if crankVelocity >= Ball.FLICK_THRESHOLD then
                 if Geom.inBand(Player.x, Ball.laneX, Field.CONTACT_BAND_HALF) then
-                    registerContact(velocity, dt)
+                    registerContact(crankVelocity, dt)
                 else
                     registerWhiff("missedBall")
                 end
