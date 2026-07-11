@@ -4,9 +4,9 @@ import "ball"
 
 Goalie = { x = Field.GOALIE_CENTER }
 
-Goalie.BASE_SPEED = 140
-Goalie.RAMP_PER_STREAK = 8
-Goalie.MAX_SPEED = 220
+Goalie.BASE_SPEED = 60
+Goalie.RAMP_PER_STREAK = 4
+Goalie.MAX_SPEED = 100
 
 function Goalie.init()
     Goalie.x = Field.GOALIE_CENTER

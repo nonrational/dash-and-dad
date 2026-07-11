@@ -25,9 +25,9 @@ function runTests()
     eq(Geom.shotFlightTime(1.0, 0.5, 1.0, 0.55, 0.22), 0.22, "shot time at max power")
     eq(Geom.shotFlightTime(0.75, 0.5, 1.0, 0.55, 0.22), 0.385, "shot time at half power")
 
-    eq(Geom.goalieSpeed(0, 140, 8, 220), 140, "goalie speed at streak 0")
-    eq(Geom.goalieSpeed(5, 140, 8, 220), 180, "goalie speed ramping")
-    eq(Geom.goalieSpeed(50, 140, 8, 220), 220, "goalie speed capped")
+    eq(Geom.goalieSpeed(0, 60, 4, 100), 60, "goalie speed at streak 0")
+    eq(Geom.goalieSpeed(5, 60, 4, 100), 80, "goalie speed ramping")
+    eq(Geom.goalieSpeed(50, 60, 4, 100), 100, "goalie speed capped")
 
     print("geom tests: all passed")
 end
