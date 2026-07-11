@@ -101,7 +101,9 @@ local function drawPlayerMarker()
     -- sprite swap.
     local x = Player.x
     local rad = math.rad(Player.crankAngle)
-    local c, s = math.cos(rad), math.sin(rad)
+    -- sin is negated so the on-screen tip matches the crank's felt
+    -- direction (checked in live play — the raw sign spun opposite).
+    local c, s = math.cos(rad), -math.sin(rad)
 
     local pts = {}
     for i = 1, #FIGURE_BODY, 2 do
