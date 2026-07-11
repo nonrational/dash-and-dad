@@ -24,7 +24,8 @@
   ls -la /tmp/foosball-<name>*.png
   ```
 
-  The simulator exits by itself after the last `Shots.plan` entry captures. Boot-time geom tests run on every launch, so each smoke test doubles as a unit-test run — check the log for `geom tests: all passed`.
+  The simulator exits by itself after the last `Shots.plan` entry captures. Boot-time geom tests run on every launch and gate the update loop: **a failing test freezes boot at an error screen and no PNG is ever written, so the captures appearing IS the test-pass signal.** (`print` output does not reach the launch log in this environment — do not expect `geom tests: all passed` on stdout. A timeout kill with no PNG means a boot failure; a timeout kill after PNGs appeared is normal for plans that don't exhaust their entries.)
+- **Environment notes (2026-07-11 session):** the sandboxed simulator cannot write to `/tmp` — substitute the session scratchpad directory for `/tmp` in every capture path. Subagent shells cannot usefully run the simulator at all; the controller runs all capture/verification steps. **Playdate's Lua uses 32-bit floats:** `eq`'s 1e-9 tolerance is effectively exact-match, so every asserted expected value must be exactly representable in single precision (integers, halves, quarters — not values like `-1.6` reached via `0.2` arithmetic).
 - The `Shots` harness pins `set` fields onto `target` every frame while an entry is pending, and runs `call` once when the entry becomes active. The splash screen gates the game loop, so the **first** entry of every capture plan must dismiss it with `call = function() Splash.active = false end`.
 - Crank input cannot be scripted; captures pin the *downstream* state instead (e.g. `Player.crankAngle`). Live control feel goes on `docs/human-acceptance-checklist.md`, never in automated checks.
 - Commit messages are plain and descriptive — **no Conventional Commit prefixes**. Commit with `git -c commit.gpgsign=false commit`.
@@ -54,14 +55,14 @@ In `source/tests.lua`, immediately after the three `Geom.goalieSpeed` assertions
     eq(Geom.projectX(200, 1, 50, 350, 140, 260), 200, "projectX center is a fixed point")
     eq(Geom.projectX(60, 1, 50, 350, 140, 260), 144, "projectX wide lane at goal line")
     eq(Geom.projectX(60, 0.5, 50, 350, 140, 260), 102, "projectX wide lane at mid depth")
-    eq(Geom.projectX(20, -0.2, 50, 350, 140, 260), -1.6, "projectX extrapolates below depth 0")
+    eq(Geom.projectX(20, -0.25, 50, 350, 140, 260), -7, "projectX extrapolates below depth 0")
 ```
 
 - [ ] **Step 2: Run to verify they fail**
 
-Run the smoke-test recipe with `<name>` = `geo1` (no screenshots expected — this run only exercises boot tests).
+Add a temporary one-entry capture plan to `source/shots.lua` (`{ after = 0.2, path = "<scratchpad>/geo1-boot.png" }`) and run the smoke-test recipe with `<name>` = `geo1`.
 
-Expected: the log does **not** contain `geom tests: all passed`; it contains a Lua error naming `projectX` (attempt to call a nil value).
+Expected: **no PNG is written** and the simulator hits the timeout kill — the boot error (`projectX` is nil) freezes the game before the update loop starts.
 
 - [ ] **Step 3: Implement `Geom.projectX`**
 
@@ -80,9 +81,9 @@ end
 
 - [ ] **Step 4: Run to verify they pass**
 
-Run the smoke-test recipe with `<name>` = `geo1` again.
+Run the smoke-test recipe with `<name>` = `geo1` again (same temporary capture entry).
 
-Expected: log contains `geom tests: all passed`, no Lua errors.
+Expected: the PNG appears and the simulator exits by itself — boot got past `runTests()`. Revert `source/shots.lua` to an empty plan before committing.
 
 - [ ] **Step 5: Commit**
 
@@ -205,7 +206,7 @@ Shots = { plan = {
 
 Run the smoke-test recipe with `<name>` = `geo2`, then view each PNG (the Read tool renders images).
 
-Expected: log contains `geom tests: all passed`. `far`: ball (r≈3) at the left end of the goal mouth (x ≈ 138–144 — pin timing adds ~one frame of progress), on/near the new far goal line, **inside** the pitch. `mid`: ball ≈ (102, 127), clearly inside the left sideline. `near`: ball ≈ (68, 190), near the track's left end. In all three: sidelines converge to a goal line at y=50 that connects them, goal frame centered on it.
+Expected (the captures appearing is itself the boot-tests-passed signal): `far`: ball (r≈3) at the left end of the goal mouth (x ≈ 138–144 — pin timing adds ~one frame of progress), on/near the new far goal line, **inside** the pitch. `mid`: ball ≈ (102, 127), clearly inside the left sideline. `near`: ball ≈ (68, 190), near the track's left end. In all three: sidelines converge to a goal line at y=50 that connects them, goal frame centered on it.
 
 - [ ] **Step 5: Revert the capture plan**
 
@@ -416,7 +417,7 @@ Shots = { plan = {
 
 Run the smoke-test recipe with `<name>` = `geo3`, then view both PNGs.
 
-Expected: log contains `geom tests: all passed`. `goal`: ball (r=3) visible at (250, 40) **under** the net's light hatching (goalie drifts back toward center ≈ 200); "GOAL!" centered at y=120, clear of the player. `save`: goalie stays at ≈ 226 for the whole 0.3s (the hold — pre-change code would have drifted ~18px toward center), ball at (226, 42) drawn **on top of** the goalie; "SAVED" at y=120.
+Expected (the captures appearing is itself the boot-tests-passed signal): `goal`: ball (r=3) visible at (250, 40) **under** the net's light hatching (goalie drifts back toward center ≈ 200); "GOAL!" centered at y=120, clear of the player. `save`: goalie stays at ≈ 226 for the whole 0.3s (the hold — pre-change code would have drifted ~18px toward center), ball at (226, 42) drawn **on top of** the goalie; "SAVED" at y=120.
 
 - [ ] **Step 5: Revert the capture plan**
 
@@ -541,7 +542,7 @@ Shots = { plan = {
 
 Run the smoke-test recipe with `<name>` = `geo4`, then view all four PNGs.
 
-Expected: log contains `geom tests: all passed`. The foot dot sits respectively above, right of, below, and left of the hip pivot at (206, 211) — a leg segment visibly rotating around the figure. (The docked-crank indicator bubble may overlap the lower right; ignore it.)
+Expected (the captures appearing is itself the boot-tests-passed signal): The foot dot sits respectively above, right of, below, and left of the hip pivot at (206, 211) — a leg segment visibly rotating around the figure. (The docked-crank indicator bubble may overlap the lower right; ignore it.)
 
 - [ ] **Step 4: Revert the capture plan**
 
