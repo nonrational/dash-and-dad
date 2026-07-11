@@ -98,14 +98,16 @@ power — harder shots leave the goalie less time to react.
 
 The goalie has no information before contact — it only starts moving once
 your shot's target x is known, which keeps it feeling fair rather than
-psychic. It moves toward that target at `min(220 + 15 × streak, 520)` px/s
-(base 220px/s, ramping 15px/s per streak point, capped at 520px/s). The
+psychic. It moves toward that target at `min(180 + 12 × streak, 360)` px/s
+(base 180px/s, ramping 12px/s per streak point, capped at 360px/s). The
 goalie's track spans the goal width plus a 40px overhang on each side (200px
-total, ±100px from center), so a maxed-out goalie starting from center can
-cover at most `520 × 0.22 ≈ 114px` before a maximum-power shot arrives —
-short of the 200px full width, meaning a hard-hit, well-placed corner shot
-always has a mathematical chance even at max difficulty. Exact constants are
-starting points, to be tuned by playtesting like submariner's.
+total, ±100px from center). It rests at center between serves, so the
+worst case for the player is a maxed-out goalie already centered when a
+maximum-power shot is aimed at either extreme corner (100px away): it can
+cover at most `360 × 0.22 ≈ 79px` before that shot arrives — short of the
+100px it needs, leaving roughly a 20px window of goal that's unreachable
+even at max difficulty. Exact constants are starting points, to be tuned by
+playtesting like submariner's.
 
 - Streak +1 on a goal.
 - Streak resets to 0 on a save or either whiff type.
