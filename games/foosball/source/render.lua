@@ -61,6 +61,19 @@ local function drawHUD()
     gfx.drawTextAligned(string.format("BEST %d", Game.bestStreak), 320, 12, kTextAlignment.center)
 end
 
+local RESULT_TEXT = {
+    goal = "GOAL!",
+    save = "SAVED",
+    missedBall = "MISSED THE BALL",
+    tooSlow = "TOO SLOW",
+}
+
+local function drawResultBanner()
+    if Ball.state == "resolved" and RESULT_TEXT[Ball.result] then
+        gfx.drawTextAligned(RESULT_TEXT[Ball.result], 200, 200, kTextAlignment.center)
+    end
+end
+
 function Render.draw(dt)
     gfx.clear(gfx.kColorWhite)
     drawPitch()
@@ -69,4 +82,5 @@ function Render.draw(dt)
     drawBallMarker()
     drawPlayerMarker()
     drawHUD()
+    drawResultBanner()
 end
