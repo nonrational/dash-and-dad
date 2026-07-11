@@ -3,6 +3,7 @@ import "geom"
 import "field"
 import "player"
 import "ball"
+import "goalie"
 
 local gfx = playdate.graphics
 
@@ -36,6 +37,12 @@ local function drawGoal()
     gfx.fillRect(Field.GOAL_MIN, Field.GOAL_Y - 22, Field.GOAL_MAX - Field.GOAL_MIN, 22)
 end
 
+local function drawGoalieMarker()
+    gfx.setColor(gfx.kColorBlack)
+    local x, y = Goalie.x, Field.GOAL_Y - 11
+    gfx.fillRoundRect(x - 14, y - 6, 28, 12, 4)
+end
+
 local function drawPlayerMarker()
     gfx.setColor(gfx.kColorBlack)
     local x, y = Player.x, Field.PLAYER_Y
@@ -52,6 +59,7 @@ function Render.draw(dt)
     gfx.clear(gfx.kColorWhite)
     drawPitch()
     drawGoal()
+    drawGoalieMarker()
     drawBallMarker()
     drawPlayerMarker()
 end

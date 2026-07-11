@@ -4,6 +4,7 @@ import "tests"
 import "field"
 import "player"
 import "ball"
+import "goalie"
 import "render"
 import "shots"
 
@@ -13,6 +14,7 @@ math.randomseed(playdate.getSecondsSinceEpoch())
 Render.init()
 Player.init()
 Ball.init()
+Goalie.init()
 if playdate.isSimulator then
     runTests()
 end
@@ -25,10 +27,9 @@ function playdate.update()
     end
     Player.update(dt)
     Ball.update(dt)
+    Goalie.update(dt, 0) -- streak wiring lands in Task 8
     if Ball.state == "flightComplete" then
-        -- No goalie until Task 7 — 9999 is outside Field.SAVE_RADIUS of any
-        -- possible Ball.shotTargetX, so this always resolves as a goal.
-        Ball.resolve(9999)
+        Ball.resolve(Goalie.x)
     end
     Render.draw(dt)
     Shots.update(dt)
