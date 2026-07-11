@@ -20,7 +20,7 @@
 - **Sprite art deferred.** The spec allows image assets for the player/goalie/ball (unlike submariner's zero-asset rule), but no art exists yet this session. Every task below draws these as simple code-drawn silhouettes instead — small, focused draw functions (`drawPlayerMarker`, `drawGoalieMarker`, `drawBallMarker`) called from one place each in `render.lua`, so swapping in real sprite images later is a localized change to those three functions, not a redesign.
 - No host Lua exists on this machine. Pure-math tests run at boot **inside the simulator** (`runTests()` guarded by `playdate.isSimulator`) and print to the simulator console. To see console output, launch the simulator binary directly: `"$HOME/Developer/PlaydateSDK/bin/Playdate Simulator.app/Contents/MacOS/Playdate Simulator" Foosball.pdx`. A failed assertion calls `error()`, which the simulator surfaces as a crash screen.
 - `playdate.graphics.setDitherPattern(alpha, ditherType)` has a documented quirk: alpha runs inverted vs. intuition for black ink. All dithered fills go through the `setInk(darkness)` helper defined in Task 3 — never call `setDitherPattern` directly elsewhere.
-- Commit messages: plain descriptive sentences. **Never** use Conventional Commit prefixes (`feat:`, `fix:`, etc.). Pass `-c commit.gpgsign=false` to every `git commit` (repo has signing on; the user has authorized unsigned commits while away for this build).
+- Commit messages: plain descriptive sentences. **Never** use Conventional Commit prefixes (`feat:`, `fix:`, etc.). Every commit uses `git -c commit.gpgsign=false commit -m "..."` — the config override goes before the `commit` subcommand, not after (`commit -c` is a different flag meaning "reuse a commit's message," not a config override) — (repo has signing on; the user has authorized unsigned commits while away for this build).
 - **Screenshot harness** (`source/shots.lua`, created in Task 3): the simulator-only pattern this project uses for automated visual verification instead of a GUI. Each `Shots.plan` entry is `{ after = <seconds>, target = <a Global table, e.g. Player>, set = { <field> = <value>, ... }, call = <function, optional>, path = "<absolute .png path>" }`. While an entry is pending, its `set` fields are pinned onto `target` every frame (so e.g. `Player.x` can be forced to a specific value for a deterministic capture); `call`, if present, runs once the frame the entry becomes active — used for things a field-pin can't express, like forcing a `playdate.datastore.write`. After the last entry's screenshot is written, the simulator exits. **Committed code always has an empty plan (`Shots.plan = {}`)** — every task below reverts it before committing.
 - **Smoke-test recipe** (used throughout this plan in place of GUI `make run`, so a subagent can verify without a human watching the simulator):
 
@@ -113,7 +113,7 @@ Expected: no crash-dialog text in the log (there's no `Shots` harness yet, so th
 
 ```bash
 git add source Makefile
-git commit -c commit.gpgsign=false -m "Add Playdate project skeleton that boots in the simulator"
+git -c commit.gpgsign=false commit -m "Add Playdate project skeleton that boots in the simulator"
 ```
 
 ---
@@ -257,7 +257,7 @@ Expected: log includes `geom tests: all passed`; no crash-dialog text.
 
 ```bash
 git add source
-git commit -c commit.gpgsign=false -m "Add pure-math geom module with boot-time tests"
+git -c commit.gpgsign=false commit -m "Add pure-math geom module with boot-time tests"
 ```
 
 ---
@@ -454,7 +454,7 @@ In `source/shots.lua`, set `Shots.plan` back to `{}`: `Shots = { plan = {}, t = 
 
 ```bash
 git add source
-git commit -c commit.gpgsign=false -m "Add field layout constants, static pitch/goal view, and screenshot harness"
+git -c commit.gpgsign=false commit -m "Add field layout constants, static pitch/goal view, and screenshot harness"
 ```
 
 ---
@@ -580,7 +580,7 @@ In `source/shots.lua`, set `Shots.plan` back to `{}`.
 
 ```bash
 git add source
-git commit -c commit.gpgsign=false -m "Add player d-pad movement along the track"
+git -c commit.gpgsign=false commit -m "Add player d-pad movement along the track"
 ```
 
 ---
@@ -762,7 +762,7 @@ In `source/shots.lua`, set `Shots.plan` back to `{}`.
 
 ```bash
 git add source
-git commit -c commit.gpgsign=false -m "Add ball serve state machine: approach, contact window, timeout"
+git -c commit.gpgsign=false commit -m "Add ball serve state machine: approach, contact window, timeout"
 ```
 
 ---
@@ -1024,7 +1024,7 @@ In `source/shots.lua`, set `Shots.plan` back to `{}`.
 
 ```bash
 git add source
-git commit -c commit.gpgsign=false -m "Add crank flick detection, contact band, whiff, and shot flight"
+git -c commit.gpgsign=false commit -m "Add crank flick detection, contact band, whiff, and shot flight"
 ```
 
 ---
@@ -1165,7 +1165,7 @@ In `source/shots.lua`, set `Shots.plan` back to `{}`.
 
 ```bash
 git add source
-git commit -c commit.gpgsign=false -m "Add goalie AI and real save/goal resolution"
+git -c commit.gpgsign=false commit -m "Add goalie AI and real save/goal resolution"
 ```
 
 ---
@@ -1342,7 +1342,7 @@ In `source/shots.lua`, set `Shots.plan` back to `{}`.
 
 ```bash
 git add source
-git commit -c commit.gpgsign=false -m "Add streak/best-streak state, datastore persistence, and HUD"
+git -c commit.gpgsign=false commit -m "Add streak/best-streak state, datastore persistence, and HUD"
 ```
 
 ---
@@ -1475,7 +1475,7 @@ Expected: no crash-dialog text in the log (a bad synth/filter API call would err
 
 ```bash
 git add source
-git commit -c commit.gpgsign=false -m "Add synthesized kick, goal, save, whiff, and crowd audio"
+git -c commit.gpgsign=false commit -m "Add synthesized kick, goal, save, whiff, and crowd audio"
 ```
 
 ---
@@ -1610,7 +1610,7 @@ In `source/shots.lua`, set `Shots.plan` back to `{}`.
 
 ```bash
 git add source
-git commit -c commit.gpgsign=false -m "Add a title/instructions splash screen before gameplay starts"
+git -c commit.gpgsign=false commit -m "Add a title/instructions splash screen before gameplay starts"
 ```
 
 ---
@@ -1696,7 +1696,7 @@ In `source/shots.lua`, set `Shots.plan` back to `{}`.
 
 ```bash
 git add source
-git commit -c commit.gpgsign=false -m "Add distinct result banner text for goal, save, and each whiff"
+git -c commit.gpgsign=false commit -m "Add distinct result banner text for goal, save, and each whiff"
 ```
 
 ---
@@ -1959,7 +1959,7 @@ In `source/shots.lua`, set `Shots.plan` back to `{}`.
 
 ```bash
 git add docs README.md CLAUDE.md source/shots.lua
-git commit -c commit.gpgsign=false -m "Add human acceptance checklist, README, and CLAUDE.md after the v1 acceptance pass"
+git -c commit.gpgsign=false commit -m "Add human acceptance checklist, README, and CLAUDE.md after the v1 acceptance pass"
 ```
 
 - [ ] **Step 7: Note remaining deferred/manual work for the user**
