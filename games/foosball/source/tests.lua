@@ -47,7 +47,7 @@ function runTests()
     eq(Geom.projectX(200, 1, 50, 350, 140, 260), 200, "projectX center is a fixed point")
     eq(Geom.projectX(60, 1, 50, 350, 140, 260), 144, "projectX wide lane at goal line")
     eq(Geom.projectX(60, 0.5, 50, 350, 140, 260), 102, "projectX wide lane at mid depth")
-    eq(Geom.projectX(20, -0.2, 50, 350, 140, 260), -1.6, "projectX extrapolates below depth 0")
+    eq(Geom.projectX(20, -0.25, 50, 350, 140, 260), -7, "projectX extrapolates below depth 0")
 
     print("geom tests: all passed")
 end
