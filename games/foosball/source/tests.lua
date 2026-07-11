@@ -39,5 +39,15 @@ function runTests()
     eq(Geom.goalieSpeed(5, 60, 4, 100), 80, "goalie speed ramping")
     eq(Geom.goalieSpeed(50, 60, 4, 100), 100, "goalie speed capped")
 
+    -- projectX: screen x of a track-space x at depth d (0 = player track,
+    -- 1 = goal line), here mapping the real spans [50,350] -> [140,260].
+    eq(Geom.projectX(200, 0, 50, 350, 140, 260), 200, "projectX identity at depth 0")
+    eq(Geom.projectX(50, 1, 50, 350, 140, 260), 140, "projectX track min to goal min")
+    eq(Geom.projectX(350, 1, 50, 350, 140, 260), 260, "projectX track max to goal max")
+    eq(Geom.projectX(200, 1, 50, 350, 140, 260), 200, "projectX center is a fixed point")
+    eq(Geom.projectX(60, 1, 50, 350, 140, 260), 144, "projectX wide lane at goal line")
+    eq(Geom.projectX(60, 0.5, 50, 350, 140, 260), 102, "projectX wide lane at mid depth")
+    eq(Geom.projectX(20, -0.2, 50, 350, 140, 260), -1.6, "projectX extrapolates below depth 0")
+
     print("geom tests: all passed")
 end

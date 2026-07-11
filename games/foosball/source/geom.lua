@@ -37,3 +37,12 @@ end
 function Geom.goalieSpeed(streak, base, ramp, cap)
     return math.min(base + ramp * streak, cap)
 end
+
+-- Screen x of a near-space (track) x at a given depth: 0 = the near edge,
+-- 1 = the far (goal-line) edge, with [nearMin, nearMax] mapping linearly
+-- onto [farMin, farMax]. Depths outside [0,1] extrapolate — the pitch
+-- sidelines use that to run past the track to the bottom of the screen.
+function Geom.projectX(x, depth, nearMin, nearMax, farMin, farMax)
+    local farX = farMin + (x - nearMin) * (farMax - farMin) / (nearMax - nearMin)
+    return Geom.lerp(x, farX, depth)
+end
