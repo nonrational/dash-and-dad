@@ -5,6 +5,11 @@ Ball = {
     state = "approach",
     progress = 0,
     laneX = 200,
+    contactX = nil,
+    shotTargetX = nil,
+    contactPower = nil,
+    flightT = 0,
+    flightDuration = 0,
     result = nil,
     resultPending = false,
     resolvedTimer = 0,
@@ -13,6 +18,14 @@ Ball = {
 Ball.T_SERVE = 1.6
 Ball.WINDOW_START = 0.82
 Ball.MISS_PAUSE = 1.5
+Ball.GOAL_PAUSE = 1.0
+
+Ball.FLICK_THRESHOLD = 900
+Ball.REFERENCE_VELOCITY = 1800
+Ball.POWER_MIN = 0.5
+Ball.POWER_MAX = 1.0
+Ball.SHOT_TIME_MIN = 0.22
+Ball.SHOT_TIME_MAX = 0.55
 
 local function randomLaneX()
     return Field.TRACK_MIN + math.random() * (Field.TRACK_MAX - Field.TRACK_MIN)
@@ -22,6 +35,9 @@ function Ball.startServe()
     Ball.state = "approach"
     Ball.progress = 0
     Ball.laneX = randomLaneX()
+    Ball.contactX = nil
+    Ball.shotTargetX = nil
+    Ball.contactPower = nil
     Ball.result = nil
 end
 
@@ -31,37 +47,107 @@ function Ball.init()
     Ball.resultPending = false
 end
 
+local function registerWhiff(result)
+    Ball.result = result
+    Ball.resultPending = true
+    Ball.state = "resolved"
+    Ball.resolvedTimer = 0
+end
+
+local function registerContact(velocity, dt)
+    Ball.contactX = Player.x
+    Ball.shotTargetX = Geom.clamp(Player.x, Field.GOAL_MIN, Field.GOAL_MAX)
+    Ball.contactPower = Geom.flickPower(velocity, Ball.REFERENCE_VELOCITY, Ball.POWER_MIN, Ball.POWER_MAX)
+    Ball.flightDuration = Geom.shotFlightTime(Ball.contactPower, Ball.POWER_MIN, Ball.POWER_MAX,
+        Ball.SHOT_TIME_MAX, Ball.SHOT_TIME_MIN)
+    Ball.flightT = 0
+    Ball.state = "flight"
+end
+
 function Ball.update(dt)
     Ball.resultPending = false
 
     if Ball.state == "approach" or Ball.state == "window" then
         Ball.progress = Ball.progress + dt / Ball.T_SERVE
+
         if Ball.state == "approach" and Ball.progress >= Ball.WINDOW_START then
             Ball.state = "window"
         end
-        if Ball.progress >= 1.0 then
+
+        if Ball.state == "window" then
+            local velocity = math.abs(playdate.getCrankChange()) / dt
+            if velocity >= Ball.FLICK_THRESHOLD then
+                if Geom.inBand(Player.x, Ball.laneX, Field.CONTACT_BAND_HALF) then
+                    registerContact(velocity, dt)
+                else
+                    registerWhiff("missedBall")
+                end
+            end
+        end
+
+        if Ball.state == "window" and Ball.progress >= 1.0 then
             Ball.progress = 1.0
-            Ball.result = "tooSlow"
-            Ball.resultPending = true
-            Ball.state = "resolved"
-            Ball.resolvedTimer = 0
+            registerWhiff("tooSlow")
+        end
+    elseif Ball.state == "flight" then
+        Ball.flightT = Ball.flightT + dt
+        if Ball.flightT >= Ball.flightDuration then
+            Ball.state = "flightComplete"
         end
     elseif Ball.state == "resolved" then
         Ball.resolvedTimer = Ball.resolvedTimer + dt
-        if Ball.resolvedTimer >= Ball.MISS_PAUSE then
+        local pause = (Ball.result == "goal") and Ball.GOAL_PAUSE or Ball.MISS_PAUSE
+        if Ball.resolvedTimer >= pause then
             Ball.startServe()
         end
     end
+    -- "flightComplete": intentionally left untouched here. main.lua checks
+    -- for this state and calls Ball.resolve(goalieX) once, before the next
+    -- frame's Ball.update runs — keeps ball.lua from ever reading Goalie
+    -- directly, so the dependency between the two modules stays one-way.
+end
+
+function Ball.resolve(goalieX)
+    Ball.result = Geom.inBand(goalieX, Ball.shotTargetX, Field.SAVE_RADIUS) and "save" or "goal"
+    Ball.resultPending = true
+    Ball.state = "resolved"
+    Ball.resolvedTimer = 0
+end
+
+local function flightProgress()
+    if Ball.flightDuration <= 0 then
+        return 1
+    end
+    return Geom.clamp(Ball.flightT / Ball.flightDuration, 0, 1)
+end
+
+local function ballAtGoal()
+    return Ball.state == "resolved" and (Ball.result == "goal" or Ball.result == "save")
 end
 
 function Ball.screenX()
+    if Ball.state == "flight" or Ball.state == "flightComplete" then
+        return Geom.lerp(Ball.contactX, Ball.shotTargetX, flightProgress())
+    elseif ballAtGoal() then
+        return Ball.shotTargetX
+    end
     return Ball.laneX
 end
 
 function Ball.screenY()
+    if Ball.state == "flight" or Ball.state == "flightComplete" then
+        return Geom.lerp(Field.PLAYER_Y, Field.GOAL_Y, flightProgress())
+    elseif ballAtGoal() then
+        return Field.GOAL_Y
+    end
     return Geom.lerp(Field.GOAL_Y, Field.PLAYER_Y, Geom.clamp(Ball.progress, 0, 1))
 end
 
 function Ball.screenScale()
+    if Ball.state == "flight" or Ball.state == "flightComplete" then
+        return Geom.lerp(Field.BALL_MAX_SCALE, Field.BALL_MIN_SCALE, flightProgress())
+    elseif ballAtGoal() then
+        return Field.BALL_MIN_SCALE
+    end
     return Geom.lerp(Field.BALL_MIN_SCALE, Field.BALL_MAX_SCALE, Geom.clamp(Ball.progress, 0, 1))
 end
