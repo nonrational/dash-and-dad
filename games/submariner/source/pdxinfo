@@ -1,0 +1,6 @@
+name=Submariner
+author=Super Tiny Labs
+description=An ambient submarine periscope toy.
+bundleID=com.supertinylabs.submariner
+version=0.1
+buildNumber=1
