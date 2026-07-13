@@ -41,3 +41,7 @@ make run     # build and launch in the Simulator
 
 To play on a device, build then sideload the `.pdx` via the simulator
 (Device menu) or [play.date/account](https://play.date/account/).
+
+## License
+
+Released into the public domain under [the Unlicense](LICENSE).
