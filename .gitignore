@@ -1,0 +1,5 @@
+# Playdate build output
+*.pdx/
+
+# macOS
+.DS_Store
