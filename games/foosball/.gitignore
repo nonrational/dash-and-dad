@@ -1,0 +1,5 @@
+# Playdate build output
+Foosball.pdx/
+
+# macOS
+.DS_Store
