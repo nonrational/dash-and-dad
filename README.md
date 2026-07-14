@@ -1,6 +1,6 @@
 # Dash & Dad Playdate
 
-[Playdate][https://play.date/] games by Dad & Dash, with lessons learned along the way.
+[Playdate](https://play.date/) games by Dad & Dash, with lessons learned along the way.
 
 ## Games
 
