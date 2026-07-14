@@ -1,6 +1,6 @@
 name=Submariner
-author=Super Tiny Labs
+author=Dash & Dad
 description=An ambient submarine periscope toy.
-bundleID=com.supertinylabs.submariner
+bundleID=com.dashanddad.submariner
 version=0.1
 buildNumber=1
