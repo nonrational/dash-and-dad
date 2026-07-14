@@ -1,16 +1,16 @@
-# Dash & Dad Playdate
+# Dash & Dad Games
 
 [Playdate](https://play.date/) games by Dad & Dash, with lessons learned along the way.
 
 ## Games
 
-### 🥅 [Foosball Shootout](games/foosball)
+### ⚽️ [Foosball Shootout](games/foosball)
 
 An arcade foosball shootout. Slide to line up with the incoming ball, tip your
 foosball player with the crank, and flick it past the goalie. The goalie gets 
 tougher the longer your streak runs!
 
-### 🔭 [Submariner](games/submariner)
+### ⚓️ [Submariner](games/submariner)
 
 An ambient submarine periscope toy. Sweep the horizon with the d-pad, raise and
 lower the scope with the crank, and play an endless game of I Spy; or ignore the
