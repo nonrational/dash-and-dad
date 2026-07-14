@@ -1,4 +1,7 @@
-# Dash & Dad Games
+<div align="center">
+  <img src="assets/logo.png" alt="Dash & Dad: a dad and his kid drinking at the beach" width="200" />
+  <h1>DASH &amp; DAD • VINTAGE VIBES</h1>
+</div>
 
 [Playdate](https://play.date/) games by Dad & Dash, with lessons learned along the way.
 
@@ -7,7 +10,7 @@
 ### ⚽️ [Foosball Shootout](games/foosball)
 
 An arcade foosball shootout. Slide to line up with the incoming ball, tip your
-foosball player with the crank, and flick it past the goalie. The goalie gets 
+foosball player with the crank, and flick it past the goalie. The goalie gets
 tougher the longer your streak runs!
 
 ### ⚓️ [Submariner](games/submariner)
