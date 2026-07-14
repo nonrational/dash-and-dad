@@ -1,23 +1,20 @@
 # Dash & Dad Playdate
 
-Playdate games built by a dad and his kid ("Dash"), and the shared know-how
-behind them.
-
-![The Foosball Shootout splash: a retro cartridge-box foosball match.](games/foosball/docs/screenshots/splash.png)
+[Playdate][https://play.date/] games by Dad & Dash, with lessons learned along the way.
 
 ## Games
 
 ### 🥅 [Foosball Shootout](games/foosball)
 
 An arcade foosball shootout. Slide to line up with the incoming ball, tip your
-foosball man with the crank, and flick it past the goalie. Endless streak mode —
-the goalie gets tougher the longer your streak runs.
+foosball player with the crank, and flick it past the goalie. The goalie gets 
+tougher the longer your streak runs!
 
 ### 🔭 [Submariner](games/submariner)
 
 An ambient submarine periscope toy. Sweep the horizon with the d-pad, raise and
-lower the scope with the crank, and play an endless game of I Spy — or just
-ignore the prompts and watch the sea.
+lower the scope with the crank, and play an endless game of I Spy; or ignore the
+prompts and watch the sea.
 
 ## Layout
 
